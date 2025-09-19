@@ -1,0 +1,91 @@
+import React from 'react';
+import { Cuidador, AnimalDashboard } from '../types/dashboard';
+
+interface ViewState {
+    page: string;
+    params?: { [key: string]: any };
+}
+
+interface KeeperDetailsPageProps {
+  keeperId: number;
+  keepers: Cuidador[];
+  animals: AnimalDashboard[];
+  onNavigateBack: () => void;
+  onNavigateTo: (view: ViewState) => void;
+}
+
+const KeeperDetailsPage: React.FC<KeeperDetailsPageProps> = ({ keeperId, keepers, animals, onNavigateBack, onNavigateTo }) => {
+  const keeper = keepers.find(k => k.id === keeperId);
+  const assignedAnimals = animals.filter(a => a.keeperId === keeperId);
+
+  if (!keeper) {
+    return (
+        <div className="text-center">
+            <h2 className="text-2xl font-bold text-white mb-4">Cuidador Não Encontrado</h2>
+            <button onClick={onNavigateBack} className="bg-brand-amber text-dark-bg font-bold py-2 px-5 rounded-lg">
+                Voltar à Lista
+            </button>
+        </div>
+    );
+  }
+
+  return (
+    <div className="text-light-cream">
+      {/* Breadcrumbs */}
+      <nav className="text-sm text-light-cream/70 mb-4">
+        <span>Dashboard</span> <span className="mx-2">&gt;</span>
+        <a href="#" onClick={(e) => { e.preventDefault(); onNavigateTo({ page: 'keepers'}); }} className="hover:text-brand-gold">Cuidadores</a>
+        <span className="mx-2">&gt;</span>
+        <span className="text-white">{keeper.name}</span>
+      </nav>
+
+      {/* Header */}
+      <header className="mb-8">
+        <h1 className="font-serif text-4xl font-extrabold text-white">{keeper.name}</h1>
+        <p className="text-brand-gold font-semibold">{keeper.specialty}</p>
+      </header>
+
+      {/* Details Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Main Info */}
+        <div className="bg-brand-brown p-8 rounded-lg shadow-lg border border-brand-gold/20 space-y-4">
+            <div>
+                <h3 className="font-serif text-xl font-bold text-brand-gold mb-2">Informações</h3>
+                 <ul className="space-y-3">
+                    <li className="flex justify-between items-center border-b border-brand-gold/10 pb-2"><span className="font-semibold text-light-cream/80">Contato:</span><span className="text-brand-amber">{keeper.contact}</span></li>
+                    <li className="flex justify-between items-center pt-2"><span className="font-semibold text-light-cream/80">Status:</span>
+                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${ keeper.status === 'Ativo' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400' }`}>
+                            {keeper.status}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {/* Assigned Animals */}
+        <div className="bg-brand-brown p-8 rounded-lg shadow-lg border border-brand-gold/20">
+            <h3 className="font-serif text-xl font-bold text-brand-gold mb-4">Animais Designados</h3>
+            {assignedAnimals.length > 0 ? (
+                <ul className="space-y-3">
+                    {assignedAnimals.map(animal => (
+                        <li key={animal.id} className="flex justify-between items-center p-2 bg-dark-bg/40 rounded-md">
+                           <div>
+                                <p className="font-medium text-white">{animal.name}</p>
+                                <p className="text-sm text-light-cream/70">{animal.species}</p>
+                           </div>
+                            <button onClick={() => onNavigateTo({ page: 'animalDetails', params: { id: animal.id } })} className="text-brand-gold hover:underline text-sm">
+                                Ver Ficha
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p className="text-light-cream/70 italic">Nenhum animal atualmente designado a este cuidador.</p>
+            )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default KeeperDetailsPage;
