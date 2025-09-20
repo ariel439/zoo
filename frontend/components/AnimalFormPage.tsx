@@ -43,6 +43,7 @@ const AnimalFormPage: React.FC<AnimalFormPageProps> = ({
       vetId: undefined,
       feedingPlanId: undefined,
       status: 'Ativo',
+      image: 'https://i.imgur.com/lFn440i.png', // Default image for new animals
   });
 
   useEffect(() => {
@@ -139,6 +140,7 @@ const AnimalFormPage: React.FC<AnimalFormPageProps> = ({
                             <option>Em Quarentena</option>
                         </select>
                     </FormField>
+                    <FormField label="URL da Imagem"><input type="text" name="image" value={formData.image || ''} onChange={handleChange} className={inputStyles} /></FormField>
                 </div>
             </div>
 

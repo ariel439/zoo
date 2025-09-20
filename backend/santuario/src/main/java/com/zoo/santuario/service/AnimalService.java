@@ -77,42 +77,54 @@ public class AnimalService {
                     existingAnimal.setVetId(animalRequestDTO.getVetId());
                     existingAnimal.setHabitatId(animalRequestDTO.getHabitatId());
                     existingAnimal.setFeedingPlanId(animalRequestDTO.getFeedingPlanId());
-                    Animal updatedAnimal = animalRepository.save(existingAnimal);
+                    Animal updatedAnimal;
+                    try {
+                        updatedAnimal = animalRepository.save(existingAnimal);
+                    } catch (Exception e) {
+                        logger.error("Error saving animal with ID {}: {}", id, e.getMessage(), e);
+                        throw new RuntimeException("Failed to save animal: " + e.getMessage(), e);
+                    }
 
                     // Send email notification if keeperId changed or is newly assigned
-                    if (updatedAnimal.getKeeperId() != null && !updatedAnimal.getKeeperId().equals(oldKeeperId)) {
-                        logger.info("Attempting to send email for updated animal (new keeper): {}", updatedAnimal.getName());
-                        cuidadorRepository.findById(updatedAnimal.getKeeperId()).ifPresent(cuidador -> {
-                            logger.info("Cuidador found for new keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
-                            String subject = "Atribuição de Animal Atualizada: " + updatedAnimal.getName();
-                            String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi atribuído a você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                                    cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
-                            emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
-                        });
-                    } else if (updatedAnimal.getKeeperId() != null && updatedAnimal.getKeeperId().equals(oldKeeperId)) {
-                        // If keeperId is the same but other animal details might have changed, notify the keeper
-                        logger.info("Attempting to send email for updated animal (same keeper): {}", updatedAnimal.getName());
-                        cuidadorRepository.findById(updatedAnimal.getKeeperId()).ifPresent(cuidador -> {
-                            logger.info("Cuidador found for keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
-                            String subject = "Detalhes do Animal Atualizados: " + updatedAnimal.getName();
-                            String body = String.format("Prezado(a) %s,<br><br>Os detalhes do animal <b>%s</b> (Espécie: %s), atribuído a você, foram atualizados.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                                    cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
-                            emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
-                        });
-                    } else if (updatedAnimal.getKeeperId() == null && oldKeeperId != null) {
-                        logger.info("Animal {} unassigned from keeper {}. Attempting to notify old keeper.", updatedAnimal.getName(), oldKeeperId);
-                    } else {
-                        logger.info("No keeperId change or new assignment for updated animal: {}. Skipping email notification.", updatedAnimal.getName());
-                    }
-                    // Optionally, notify the old keeper if assignment changed (animal unassigned or reassigned)
-                    if (oldKeeperId != null && (updatedAnimal.getKeeperId() == null || !updatedAnimal.getKeeperId().equals(oldKeeperId))) {
-                         cuidadorRepository.findById(oldKeeperId).ifPresent(cuidador -> {
-                            logger.info("Cuidador found for old keeperId: {}. Contact email: {}", oldKeeperId, cuidador.getContact());
-                            String subject = "Animal Desatribuído: " + updatedAnimal.getName();
-                            String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi desatribuído de você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                                    cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
-                            emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
-                        });
+                    try {
+                        if (updatedAnimal.getKeeperId() != null && !updatedAnimal.getKeeperId().equals(oldKeeperId)) {
+                            logger.info("Attempting to send email for updated animal (new keeper): {}", updatedAnimal.getName());
+                            cuidadorRepository.findById(updatedAnimal.getKeeperId()).ifPresent(cuidador -> {
+                                logger.info("Cuidador found for new keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
+                                String subject = "Atribuição de Animal Atualizada: " + updatedAnimal.getName();
+                                String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi atribuído a você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
+                                        cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
+                                emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
+                            });
+                        } else if (updatedAnimal.getKeeperId() != null && updatedAnimal.getKeeperId().equals(oldKeeperId)) {
+                            // If keeperId is the same but other animal details might have changed, notify the keeper
+                            logger.info("Attempting to send email for updated animal (same keeper): {}", updatedAnimal.getName());
+                            cuidadorRepository.findById(updatedAnimal.getKeeperId()).ifPresent(cuidador -> {
+                                logger.info("Cuidador found for keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
+                                String subject = "Detalhes do Animal Atualizados: " + updatedAnimal.getName();
+                                String body = String.format("Prezado(a) %s,<br><br>Os detalhes do animal <b>%s</b> (Espécie: %s), atribuído a você, foram atualizados.<br><br>Atenciosamente,<br>Gerência do Zoológico",
+                                        cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
+                                emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
+                            });
+                        } else if (updatedAnimal.getKeeperId() == null && oldKeeperId != null) {
+                            logger.info("Animal {} unassigned from keeper {}. Attempting to notify old keeper.", updatedAnimal.getName(), oldKeeperId);
+                        } else {
+                            logger.info("No keeperId change or new assignment for updated animal: {}. Skipping email notification.", updatedAnimal.getName());
+                        }
+                        // Optionally, notify the old keeper if assignment changed (animal unassigned or reassigned)
+                        if (oldKeeperId != null && (updatedAnimal.getKeeperId() == null || !updatedAnimal.getKeeperId().equals(oldKeeperId))) {
+                             cuidadorRepository.findById(oldKeeperId).ifPresent(cuidador -> {
+                                logger.info("Cuidador found for old keeperId: {}. Contact email: {}", oldKeeperId, cuidador.getContact());
+                                String subject = "Animal Desatribuído: " + updatedAnimal.getName();
+                                String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi desatribuído de você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
+                                        cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
+                                emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
+                            });
+                        }
+                    } catch (Exception e) {
+                        logger.error("Error sending email notification for animal with ID {}: {}", id, e.getMessage(), e);
+                        // Continue processing even if email fails, or rethrow if email is critical
+                        // For now, we'll just log and continue.
                     }
 
 
