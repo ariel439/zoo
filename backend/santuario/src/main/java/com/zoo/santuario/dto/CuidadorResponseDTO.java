@@ -11,7 +11,8 @@ public class CuidadorResponseDTO {
 
     private Long id;
     private String name;
-    private String contactInfo;
+    private String contact;
     private String specialty;
+    private String status;
 
 }

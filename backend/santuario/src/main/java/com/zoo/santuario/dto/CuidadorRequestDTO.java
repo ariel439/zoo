@@ -10,7 +10,8 @@ import lombok.AllArgsConstructor;
 public class CuidadorRequestDTO {
 
     private String name;
-    private String contactInfo;
+    private String contact;
     private String specialty;
+    private String status;
 
 }

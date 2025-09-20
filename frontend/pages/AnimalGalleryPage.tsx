@@ -77,7 +77,7 @@ const AnimalCard: React.FC<{ animal: AnimalSite }> = ({ animal }) => (
 
 const ComingSoonCard: React.FC = () => (
     <div className="bg-brand-brown rounded-lg shadow-lg flex flex-col items-center justify-center p-6 border-2 border-dashed border-brand-gold/50 h-full">
-        <svg className="w-12 h-12 text-brand-gold/60 mb-4" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-12 h-12 text-brand-gold/60 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
         <h3 className="font-serif text-2xl font-bold text-white mb-1">Mais em Breve</h3>

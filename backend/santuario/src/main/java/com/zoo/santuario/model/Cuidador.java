@@ -18,7 +18,8 @@ public class Cuidador {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String contactInfo;
+    private String contact;
     private String specialty;
+    private String status;
 
 }
