@@ -3,6 +3,7 @@ package com.zoo.santuario.model;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,11 +18,16 @@ public class Animal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false)
     private String name;
+    @Column(nullable = false)
     private String species;
     private int age;
+    @Column(nullable = false)
     private String sex;
+    @Column(nullable = false)
     private String arrivalDate;
+    @Column(nullable = false)
     private String status;
     private String image; // Optional image URL
 
