@@ -8,8 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Data
 @NoArgsConstructor
@@ -19,8 +17,10 @@ public class Alimentacao {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String planName;
+    private String animalSpecies;
     private String foodType;
-    private double quantity;
-    private LocalDateTime feedingTime;
+    private String quantity;
+    private String frequency;
 
 }

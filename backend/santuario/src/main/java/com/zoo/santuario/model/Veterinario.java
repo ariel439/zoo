@@ -18,7 +18,8 @@ public class Veterinario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String contactInfo;
-    private String licenseNumber;
+    private String crmv;
+    private String specialty;
+    private String status;
 
 }

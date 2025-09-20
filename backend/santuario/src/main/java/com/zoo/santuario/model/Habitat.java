@@ -18,8 +18,8 @@ public class Habitat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String description;
-    private double temperature;
-    private double humidity;
+    private String type;
+    private int capacity;
+    private String status;
 
 }

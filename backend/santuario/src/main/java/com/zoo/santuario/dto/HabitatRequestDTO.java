@@ -10,8 +10,8 @@ import lombok.AllArgsConstructor;
 public class HabitatRequestDTO {
 
     private String name;
-    private String description;
-    private double temperature;
-    private double humidity;
+    private String type;
+    private int capacity;
+    private String status;
 
 }

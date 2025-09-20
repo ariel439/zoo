@@ -10,7 +10,8 @@ import lombok.AllArgsConstructor;
 public class VeterinarioRequestDTO {
 
     private String name;
-    private String contactInfo;
-    private String licenseNumber;
+    private String crmv;
+    private String specialty;
+    private String status;
 
 }

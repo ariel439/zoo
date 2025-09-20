@@ -11,7 +11,8 @@ public class VeterinarioResponseDTO {
 
     private Long id;
     private String name;
-    private String contactInfo;
-    private String licenseNumber;
+    private String crmv;
+    private String specialty;
+    private String status;
 
 }
