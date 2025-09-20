@@ -1,29 +1,70 @@
 package com.zoo.santuario.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
     @Autowired
-    private JavaMailSender mailSender;
+    private RestTemplate restTemplate;
 
-    @Value("${spring.mail.from}")
+    @Value("${SENDGRID_API_KEY}")
+    private String sendGridApiKey;
+
+    @Value("${SENDGRID_FROM_EMAIL}")
     private String fromEmail;
 
+    private static final String SENDGRID_API_URL = "https://api.sendgrid.com/v3/mail/send";
+
     public void sendAnimalNotificationEmail(String to, String subject, String body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(sendGridApiKey);
+
+        Map<String, Object> emailRequest = new HashMap<>();
+
+        // From email
+        Map<String, String> from = new HashMap<>();
+        from.put("email", fromEmail);
+        emailRequest.put("from", from);
+
+        // To email
+        Map<String, String> toEmail = new HashMap<>();
+        toEmail.put("email", to);
+        Map<String, Object> personalizations = new HashMap<>();
+        personalizations.put("to", Collections.singletonList(toEmail));
+        personalizations.put("subject", subject);
+        emailRequest.put("personalizations", Collections.singletonList(personalizations));
+
+        // Content
+        Map<String, String> content = new HashMap<>();
+        content.put("type", "text/html");
+        content.put("value", body);
+        emailRequest.put("content", Collections.singletonList(content));
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(emailRequest, headers);
+
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            mailSender.send(message);
-            System.out.println("Email sent successfully to: " + to);
+            ResponseEntity<String> response = restTemplate.exchange(
+                    SENDGRID_API_URL, HttpMethod.POST, request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                System.out.println("Email sent successfully to: " + to);
+            } else {
+                System.err.println("Failed to send email to " + to + ": " + response.getStatusCode() + " - " + response.getBody());
+            }
         } catch (Exception e) {
             System.err.println("Error sending email to " + to + ": " + e.getMessage());
             e.printStackTrace();
