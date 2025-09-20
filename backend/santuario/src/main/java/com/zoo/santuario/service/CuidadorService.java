@@ -29,6 +29,9 @@ public class CuidadorService {
     }
 
     public CuidadorResponseDTO createCuidador(CuidadorRequestDTO cuidadorRequestDTO) {
+        if (cuidadorRepository.findByContact(cuidadorRequestDTO.getContact()).isPresent()) {
+            throw new IllegalArgumentException("A cuidador with this contact already exists.");
+        }
         Cuidador cuidador = convertToEntity(cuidadorRequestDTO);
         Cuidador savedCuidador = cuidadorRepository.save(cuidador);
         return convertToDto(savedCuidador);
@@ -37,6 +40,12 @@ public class CuidadorService {
     public Optional<CuidadorResponseDTO> updateCuidador(Long id, CuidadorRequestDTO cuidadorRequestDTO) {
         return cuidadorRepository.findById(id)
                 .map(existingCuidador -> {
+                    // Check if the contact is being changed to an existing one by another cuidador
+                    if (!existingCuidador.getContact().equals(cuidadorRequestDTO.getContact())) {
+                        if (cuidadorRepository.findByContact(cuidadorRequestDTO.getContact()).isPresent()) {
+                            throw new IllegalArgumentException("A cuidador with this contact already exists.");
+                        }
+                    }
                     existingCuidador.setName(cuidadorRequestDTO.getName());
                     existingCuidador.setContact(cuidadorRequestDTO.getContact());
                     existingCuidador.setSpecialty(cuidadorRequestDTO.getSpecialty());

@@ -89,12 +89,22 @@ public class AnimalService {
                                     cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
                             emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
                         });
+                    } else if (updatedAnimal.getKeeperId() != null && updatedAnimal.getKeeperId().equals(oldKeeperId)) {
+                        // If keeperId is the same but other animal details might have changed, notify the keeper
+                        logger.info("Attempting to send email for updated animal (same keeper): {}", updatedAnimal.getName());
+                        cuidadorRepository.findById(updatedAnimal.getKeeperId()).ifPresent(cuidador -> {
+                            logger.info("Cuidador found for keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
+                            String subject = "Animal Details Updated: " + updatedAnimal.getName();
+                            String body = String.format("Dear %s,<br><br>Details for the animal <b>%s</b> (Species: %s), assigned to you, have been updated.<br><br>Regards,<br>Zoo Management",
+                                    cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
+                            emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
+                        });
                     } else if (updatedAnimal.getKeeperId() == null && oldKeeperId != null) {
                         logger.info("Animal {} unassigned from keeper {}. Attempting to notify old keeper.", updatedAnimal.getName(), oldKeeperId);
                     } else {
                         logger.info("No keeperId change or new assignment for updated animal: {}. Skipping email notification.", updatedAnimal.getName());
                     }
-                    // Optionally, notify the old keeper if assignment changed
+                    // Optionally, notify the old keeper if assignment changed (animal unassigned or reassigned)
                     if (oldKeeperId != null && (updatedAnimal.getKeeperId() == null || !updatedAnimal.getKeeperId().equals(oldKeeperId))) {
                          cuidadorRepository.findById(oldKeeperId).ifPresent(cuidador -> {
                             logger.info("Cuidador found for old keeperId: {}. Contact email: {}", oldKeeperId, cuidador.getContact());
