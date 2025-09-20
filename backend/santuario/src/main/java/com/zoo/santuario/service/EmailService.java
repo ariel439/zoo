@@ -1,8 +1,8 @@
 package com.zoo.santuario.service;
 
 import com.resend.Resend;
-import com.resend.SendEmailRequest;
-import com.resend.SendEmailResponse;
+import com.resend.services.emails.model.CreateEmailOptions;
+import com.resend.services.emails.model.CreateEmailResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -23,14 +23,14 @@ public class EmailService {
 
     public void sendAnimalNotificationEmail(String to, String subject, String body) {
         try {
-            SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
+            CreateEmailOptions createEmailOptions = CreateEmailOptions.builder()
                     .from(fromEmail)
                     .to(to)
                     .subject(subject)
                     .html(body)
                     .build();
 
-            SendEmailResponse response = resend.emails.send(sendEmailRequest);
+            CreateEmailResponse response = resend.emails.send(createEmailOptions);
             System.out.println("Email sent successfully. ID: " + response.getId());
         } catch (Exception e) {
             System.err.println("Error sending email: " + e.getMessage());
