@@ -51,11 +51,7 @@ Our backend will follow a standard layered architecture (Controller-Service-Repo
     *   Check habitat capacity before adding an animal.
     *   Ensure an animal has at least one caretaker.
 
-### 2.9. Email Notifications
-*   Create an `EmailService` that uses the Resend Java SDK.
-*   Inject this service into other services (e.g., `AnimalService`) to trigger email notifications on create, update, and delete operations related to zookeepers.
-
-### 2.10. API Documentation & CORS
+### 2.9. API Documentation & CORS
 *   Configure SpringDoc to automatically generate OpenAPI (Swagger UI) documentation from the controllers.
 *   Configure Cross-Origin Resource Sharing (CORS) globally to allow requests from the React frontend.
 
@@ -66,7 +62,22 @@ Our backend will follow a standard layered architecture (Controller-Service-Repo
 *   Connect the CRUD operations in the UI to the backend API.
 *   Ensure filtering UI components are connected to the filtering endpoints.
 
-## 4. Hosting and Deployment
+## 4. Current Status and Next Steps
 
-*   Deploy the Spring Boot application and MySQL database on Railway.
-*   Deploy the React frontend on Railway.
+### 4.1. Current Status
+*   **Backend Development:** All core backend services (Models, Repositories, DTOs, Services, Controllers) for Animal, Habitat, Cuidador, Veterinario, and Alimentacao are implemented. API Documentation and CORS are configured.
+*   **Frontend-Backend Integration:** The frontend `DashboardPage.tsx` has been updated to fetch data from the backend API and handle CRUD operations for all entities. Mock data has been replaced.
+
+### 4.2. Next Steps (Ordered by Priority)
+
+1.  **Deployment:**
+    *   Deploy the Spring Boot backend application and MySQL database to Railway.
+    *   Deploy the React frontend application to Railway.
+    *   Perform comprehensive testing on the live server to ensure all integrated functionalities work as expected.
+
+2.  **Email Notifications:**
+    *   Create and implement the `EmailService` in the backend using the Resend Java SDK.
+    *   Integrate the `EmailService` into relevant services (e.g., `AnimalService`) to send email notifications to specific zookeepers upon animal-related changes (add, update, delete).
+
+3.  **Login Page (Optional/Future):**
+    *   Implement the login functionality on the `EmployeeLoginPage`, potentially integrating with Google authentication. This will be a stretch goal after core functionalities and email notifications are complete and tested.

@@ -19,6 +19,12 @@ import FeedingPlanDetailsPage from '../components/FeedingPlanDetailsPage';
 import FeedingPlanFormPage from '../components/FeedingPlanFormPage';
 import ToastNotification from '../components/ToastNotification';
 import { AnimalDashboard, Cuidador, Veterinario, Habitat, PlanoAlimentar } from '../types/dashboard';
+import { 
+    getAnimals, getCuidadores, getVeterinarios, getHabitats, getAlimentacoes, 
+    deleteAnimal, deleteCuidador, deleteVeterinario, deleteHabitat, deleteAlimentacao,
+    createAnimal, updateAnimal, createCuidador, updateCuidador, createVeterinario, updateVeterinario,
+    createHabitat, updateHabitat, createAlimentacao, updateAlimentacao
+} from '../services/api';
 
 
 interface DashboardPageProps {
@@ -40,44 +46,6 @@ const navItems = [
     { id: 'habitats', name: 'Habitats', icon: GlobeAltIcon },
     { id: 'feeding', name: 'Alimentação', icon: BowlIcon },
 ];
-
-// --- Initial Data Sets with Relational IDs ---
-
-const initialKeeperData: Cuidador[] = [
-    { id: 1, name: 'David Chen', specialty: 'Grandes Felinos', contact: 'david@santuario.com', status: 'Ativo' },
-    { id: 2, name: 'Maria Garcia', specialty: 'Aves e Répteis', contact: 'maria@santuario.com', status: 'Ativo' },
-    { id: 3, name: 'João Silva', specialty: 'Primatas', contact: 'joao@santuario.com', status: 'Férias' },
-];
-
-const initialVetData: Veterinario[] = [
-    { id: 1, name: 'Dr. Anya Sharma', specialty: 'Cirurgia Geral', crmv: 'CRMV-SP 12345', status: 'Ativo' },
-    { id: 2, name: 'Dr. Carlos Lima', specialty: 'Animais Exóticos', crmv: 'CRMV-RJ 54321', status: 'Ativo' },
-];
-
-const initialHabitatData: Habitat[] = [
-    { id: 1, name: 'Savana Africana', type: 'Terrestre', capacity: 15, status: 'Operacional' },
-    { id: 2, name: 'Floresta Tropical', type: 'Misto', capacity: 20, status: 'Operacional' },
-    { id: 3, name: 'Grande Aquário', type: 'Aquático', capacity: 30, status: 'Em Manutenção' },
-    { id: 4, name: 'Aviário', type: 'Aviário', capacity: 50, status: 'Operacional' },
-    { id: 5, name: 'Reptilário', type: 'Reptilário', capacity: 25, status: 'Operacional' },
-];
-
-const initialFeedingData: PlanoAlimentar[] = [
-    { id: 1, planName: 'Dieta Carnívora Padrão', animalSpecies: 'Grandes Felinos', foodType: 'Carne Vermelha', quantity: '5kg', frequency: '2x ao dia' },
-    { id: 2, planName: 'Dieta de Primatas', animalSpecies: 'Micos', foodType: 'Frutas e Insetos', quantity: '500g', frequency: '3x ao dia' },
-    { id: 3, planName: 'Dieta de Aves de Bico Grande', animalSpecies: 'Tucano', foodType: 'Frutas e sementes', quantity: '300g', frequency: 'Contínuo' },
-    { id: 4, planName: 'Dieta de Herbívoros', animalSpecies: 'Zebra', foodType: 'Feno e vegetais', quantity: '10kg', frequency: 'Contínuo' },
-];
-
-const initialAnimalData: AnimalDashboard[] = [
-  { id: 1, name: 'Léo o Leão', species: 'Leão', age: 5, sex: 'Macho', keeperId: 1, vetId: 1, habitatId: 1, feedingPlanId: 1, status: 'Ativo', arrivalDate: '2022-03-15' },
-  { id: 2, name: 'Kiki', species: 'Mico-Leão-Dourado', age: 2, sex: 'Fêmea', keeperId: 3, vetId: 2, habitatId: 2, feedingPlanId: 2, status: 'Ativo', arrivalDate: '2023-01-20' },
-  { id: 3, name: 'Paco', species: 'Tucano', age: 3, sex: 'Macho', keeperId: 2, vetId: 2, habitatId: 4, feedingPlanId: 3, status: 'Em Observação', arrivalDate: '2023-05-10' },
-  { id: 4, name: 'Rajah', species: 'Tigre-de-bengala', age: 7, sex: 'Macho', keeperId: 1, vetId: 1, habitatId: 2, feedingPlanId: 1, status: 'Ativo', arrivalDate: '2024-08-01' },
-  { id: 5, name: 'Zola', species: 'Zebra-da-planície', age: 4, sex: 'Fêmea', keeperId: 1, vetId: 2, habitatId: 1, feedingPlanId: 4, status: 'Ativo', arrivalDate: '2024-09-05' },
-  { id: 6, name: 'Naga', species: 'Naja', age: 6, sex: 'Fêmea', keeperId: 2, vetId: 2, habitatId: 5, feedingPlanId: 1, status: 'Em Observação', arrivalDate: '2024-10-22' },
-];
-
 
 // --- Column Configurations for Generic Page ---
 const KEEPER_COLUMNS = [
@@ -204,7 +172,7 @@ const DashboardOverview: React.FC<{
                 </div>
 
                 {/* Habitat Occupancy */}
-                <div className="bg-brand-brown p-6 rounded-lg shadow-lg border border-brand-gold/20">
+                <div className="bg-brand-brown p-6 rounded-lg shadow-lg overflow-hidden border border-brand-gold/20">
                      <h2 className="font-serif text-2xl font-bold text-white mb-4">Ocupação dos Habitats</h2>
                      <div className="space-y-4">
                         {habitats.filter(h => h.status === 'Operacional').map(habitat => {
@@ -274,11 +242,35 @@ const typeToNameMap: { [key: string]: string } = {
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
     // State for all data
-    const [animals, setAnimals] = React.useState<AnimalDashboard[]>(initialAnimalData);
-    const [keepers, setKeepers] = React.useState<Cuidador[]>(initialKeeperData);
-    const [vets, setVets] = React.useState<Veterinario[]>(initialVetData);
-    const [habitats, setHabitats] = React.useState<Habitat[]>(initialHabitatData);
-    const [feedingPlans, setFeedingPlans] = React.useState<PlanoAlimentar[]>(initialFeedingData);
+    const [animals, setAnimals] = React.useState<AnimalDashboard[]>([]);
+    const [keepers, setKeepers] = React.useState<Cuidador[]>([]);
+    const [vets, setVets] = React.useState<Veterinario[]>([]);
+    const [habitats, setHabitats] = React.useState<Habitat[]>([]);
+    const [feedingPlans, setFeedingPlans] = React.useState<PlanoAlimentar[]>([]);
+
+    React.useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [animalsData, keepersData, vetsData, habitatsData, feedingPlansData] = await Promise.all([
+                    getAnimals(),
+                    getCuidadores(),
+                    getVeterinarios(),
+                    getHabitats(),
+                    getAlimentacoes()
+                ]);
+                setAnimals(animalsData);
+                setKeepers(keepersData);
+                setVets(vetsData);
+                setHabitats(habitatsData);
+                setFeedingPlans(feedingPlansData);
+            } catch (error) {
+                console.error("Failed to fetch initial data", error);
+                setToastMessage("Erro ao carregar os dados iniciais. Tente novamente mais tarde.");
+            }
+        };
+
+        fetchData();
+    }, []);
 
     // Navigation and Modal State
     const [viewStack, setViewStack] = React.useState<ViewState[]>([{ page: 'dashboard' }]);
@@ -303,45 +295,61 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
     };
     
     // Generic Save/Update Logic
-    const saveData = (itemData: any, type: string) => {
+    const saveData = async (itemData: any, type: string) => {
         const isEditing = itemData.id !== undefined && itemData.id !== null;
-        
-        const updateState = (
-            stateArray: any[],
-            setter: React.Dispatch<React.SetStateAction<any[]>>
-        ) => {
-            if (isEditing) {
-                setter(prev => prev.map(item => item.id === itemData.id ? { ...item, ...itemData } : item));
-            } else {
-                const newId = Math.max(0, ...stateArray.map(i => i.id || 0)) + 1;
-                setter(prev => [...prev, { ...itemData, id: newId }]);
+
+        try {
+            let savedItem;
+            switch (type) {
+                case 'animal':
+                    savedItem = isEditing ? await updateAnimal(itemData.id, itemData) : await createAnimal(itemData);
+                    break;
+                case 'keeper':
+                    savedItem = isEditing ? await updateCuidador(itemData.id, itemData) : await createCuidador(itemData);
+                    break;
+                case 'vet':
+                    savedItem = isEditing ? await updateVeterinario(itemData.id, itemData) : await createVeterinario(itemData);
+                    break;
+                case 'habitat':
+                    savedItem = isEditing ? await updateHabitat(itemData.id, itemData) : await createHabitat(itemData);
+                    break;
+                case 'feedingPlan':
+                    savedItem = isEditing ? await updateAlimentacao(itemData.id, itemData) : await createAlimentacao(itemData);
+                    break;
+                default:
+                    throw new Error(`Unknown type: ${type}`);
             }
-        };
 
-        switch (type) {
-            case 'animal': updateState(animals, setAnimals); break;
-            case 'keeper': updateState(keepers, setKeepers); break;
-            case 'vet': updateState(vets, setVets); break;
-            case 'habitat': updateState(habitats, setHabitats); break;
-            case 'feedingPlan': updateState(feedingPlans, setFeedingPlans); break;
-        }
+            const updateState = (
+                stateArray: any[],
+                setter: React.Dispatch<React.SetStateAction<any[]>>
+            ) => {
+                if (isEditing) {
+                    setter(prev => prev.map(item => item.id === savedItem.id ? savedItem : item));
+                } else {
+                    setter(prev => [...prev, savedItem]);
+                }
+            };
 
-        const action = isEditing ? 'atualizado' : 'adicionado';
-        const itemName = itemData.name || itemData.planName;
-        const friendlyTypeName = typeToNameMap[type] || 'Item';
-
-        if (type === 'animal') {
-            const keeper = keepers.find(k => k.id === itemData.keeperId);
-            if (keeper && keeper.contact) {
-                setToastMessage(`Simulação: E-mail enviado para ${keeper.contact} (${itemName} foi ${action}).`);
-            } else {
-                 setToastMessage(`${friendlyTypeName} "${itemName}" foi ${action} com sucesso.`);
+            switch (type) {
+                case 'animal': updateState(animals, setAnimals); break;
+                case 'keeper': updateState(keepers, setKeepers); break;
+                case 'vet': updateState(vets, setVets); break;
+                case 'habitat': updateState(habitats, setHabitats); break;
+                case 'feedingPlan': updateState(feedingPlans, setFeedingPlans); break;
             }
-        } else {
+
+            const action = isEditing ? 'atualizado' : 'adicionado';
+            const itemName = savedItem.name || savedItem.planName;
+            const friendlyTypeName = typeToNameMap[type] || 'Item';
+
             setToastMessage(`${friendlyTypeName} "${itemName}" foi ${action} com sucesso.`);
+            navigateBack();
+
+        } catch (error) {
+            console.error(`Failed to save ${type}`, error);
+            setToastMessage(`Erro ao salvar o item. Tente novamente mais tarde.`);
         }
-        
-        navigateBack();
     };
 
     // Deletion Logic
@@ -354,29 +362,47 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
         setModalState({ isOpen: false, itemToDelete: null });
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (!modalState.itemToDelete) return;
         const { id, type, name } = modalState.itemToDelete;
 
-        const detailPageName = `${type}Details`;
-        if (currentView.page === detailPageName && currentView.params?.id === id) {
-            navigateBack();
+        try {
+            switch(type) {
+                case 'animal':
+                    await deleteAnimal(id);
+                    setAnimals(prev => prev.filter(item => item.id !== id));
+                    break;
+                case 'keeper':
+                    await deleteCuidador(id);
+                    setKeepers(prev => prev.filter(item => item.id !== id));
+                    break;
+                case 'vet':
+                    await deleteVeterinario(id);
+                    setVets(prev => prev.filter(item => item.id !== id));
+                    break;
+                case 'habitat':
+                    await deleteHabitat(id);
+                    setHabitats(prev => prev.filter(item => item.id !== id));
+                    break;
+                case 'feedingPlan':
+                    await deleteAlimentacao(id);
+                    setFeedingPlans(prev => prev.filter(item => item.id !== id));
+                    break;
+            }
+
+            const friendlyTypeName = typeToNameMap[type] || 'Item';
+            setToastMessage(`${friendlyTypeName} "${name}" foi excluído com sucesso.`);
+
+            // If the detailed view of the deleted item is open, navigate back
+            const detailPageName = `${type}Details`;
+            if (currentView.page === detailPageName && currentView.params?.id === id) {
+                navigateBack();
+            }
+
+        } catch (error) {
+            console.error(`Failed to delete ${type}`, error);
+            setToastMessage(`Erro ao excluir o item. Tente novamente mais tarde.`);
         }
-
-        const deleteFromState = (setter: React.Dispatch<React.SetStateAction<any[]>>) => {
-            setter(prev => prev.filter(item => item.id !== id));
-        };
-
-        switch(type) {
-            case 'animal': deleteFromState(setAnimals); break;
-            case 'keeper': deleteFromState(setKeepers); break;
-            case 'vet': deleteFromState(setVets); break;
-            case 'habitat': deleteFromState(setHabitats); break;
-            case 'feedingPlan': deleteFromState(setFeedingPlans); break;
-        }
-
-        const friendlyTypeName = typeToNameMap[type] || 'Item';
-        setToastMessage(`${friendlyTypeName} "${name}" foi excluído com sucesso.`);
 
         handleModalClose();
     };
