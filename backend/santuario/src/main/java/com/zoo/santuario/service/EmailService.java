@@ -1,8 +1,8 @@
 package com.zoo.santuario.service;
 
 import com.resend.Resend;
-import com.resend.services.emails.model.SendEmailRequest;
-import com.resend.services.emails.model.SendEmailResponse;
+import com.resend.SendEmailRequest;
+import com.resend.SendEmailResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
