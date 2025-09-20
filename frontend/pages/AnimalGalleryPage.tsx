@@ -1,66 +1,10 @@
 import React from 'react';
-import { AnimalSite } from '../types/site';
+// import { AnimalSite } from '../types/site'; // No longer needed if AnimalSite is only for animalsData
+import { animalImageOptions, AnimalImageOption } from '../utils/animalImages'; // New import
 
-const animalsData: AnimalSite[] = [
-  {
-    id: 1,
-    image: 'https://i.imgur.com/ts6XVw4.png',
-    name: 'Mico-Leão-Dourado',
-    scientificName: 'Leontopithecus rosalia',
-    description: 'Este primata vibrante é um símbolo da Mata Atlântica e um sucesso na conservação.',
-  },
-  {
-    id: 2,
-    image: 'https://i.imgur.com/lFn440i.png',
-    name: 'Onça-Pintada',
-    scientificName: 'Panthera onca',
-    description: 'O maior felino das Américas, um predador majestoso e peça chave em seu ecossistema.',
-  },
-  {
-    id: 3,
-    image: 'https://i.imgur.com/FeWzN92.png',
-    name: 'Tucano',
-    scientificName: 'Ramphastos toco',
-    description: 'Com seu bico icônico e cores vivas, o tucano é uma das joias da avifauna neotropical.',
-  },
-   {
-    id: 4,
-    image: 'https://i.imgur.com/ULQz7LQ.png',
-    name: 'Capivara',
-    scientificName: 'Hydrochoerus hydrochaeris',
-    description: 'O maior roedor do mundo, conhecido por sua natureza calma e vida em comunidade.',
-  },
-  {
-    id: 5,
-    image: 'https://i.imgur.com/ajQevk1.png',
-    name: 'Girafa-Reticulada',
-    scientificName: 'Giraffa reticulata',
-    description: 'Com seu pescoço longo e padrão de pelagem único, é o animal mais alto do mundo.',
-  },
-  {
-    id: 6,
-    image: 'https://i.imgur.com/b1gAgS0.png',
-    name: 'Elefante-da-Savana',
-    scientificName: 'Loxodonta africana',
-    description: 'O maior animal terrestre, conhecido por sua inteligência e complexas estruturas sociais.',
-  },
-  {
-    id: 7,
-    image: 'https://i.imgur.com/lsObYae.png',
-    name: 'Tigre Siberiano',
-    scientificName: 'Panthera tigris altaica',
-    description: 'O maior de todos os tigres, conhecido por sua força impressionante e pelagem para o frio.',
-  },
-  {
-    id: 8,
-    image: 'https://i.imgur.com/gZMow1m.png',
-    name: 'Panda Vermelho',
-    scientificName: 'Ailurus fulgens',
-    description: 'Um mamífero arbóreo encantador, nativo das florestas temperadas do Himalaia.',
-  },
-];
+// Remove the hardcoded animalsData array
 
-const AnimalCard: React.FC<{ animal: AnimalSite }> = ({ animal }) => (
+const AnimalCard: React.FC<{ animal: AnimalImageOption }> = ({ animal }) => (
   <div className="bg-brand-brown rounded-lg shadow-lg overflow-hidden flex flex-col h-full">
     <img 
       className="w-full h-56 object-cover" 
@@ -69,8 +13,9 @@ const AnimalCard: React.FC<{ animal: AnimalSite }> = ({ animal }) => (
     />
     <div className="p-6 flex flex-col flex-grow">
       <h3 className="font-serif text-2xl font-bold text-white mb-1">{animal.name}</h3>
-      <p className="text-light-cream/80 italic mb-3">{animal.scientificName}</p>
-      <p className="text-light-cream text-sm flex-grow">{animal.description}</p>
+      {/* Remove scientificName and description as they are not in AnimalImageOption */}
+      {/* <p className="text-light-cream/80 italic mb-3">{animal.scientificName}</p> */}
+      {/* <p className="text-light-cream text-sm flex-grow">{animal.description}</p> */}
     </div>
   </div>
 );
@@ -102,7 +47,7 @@ const AnimalGalleryPage: React.FC = () => {
       <section className="pt-12 pb-20 bg-dark-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {animalsData.map(animal => <AnimalCard key={animal.id} animal={animal} />)}
+              {animalImageOptions.map(animal => <AnimalCard key={animal.id} animal={animal} />)} {/* Use animalImageOptions */}
            </div>
         </div>
       </section>

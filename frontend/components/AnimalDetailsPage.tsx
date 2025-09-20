@@ -1,5 +1,8 @@
 import React from 'react';
 import { AnimalDashboard, Cuidador, Veterinario, Habitat, PlanoAlimentar } from '../types/dashboard';
+import ImageSelectionModal from './ImageSelectionModal'; // New import
+import { updateAnimal } from '../services/api'; // New import
+import { AnimalResponseDTO } from '../types/types'; // New import
 
 type PageName = 'dashboard' | 'animals' | 'animalDetails' | 'animalForm' | 'keepers' | 'keeperDetails' | 'keeperForm' | 'vets' | 'vetDetails' | 'vetForm' | 'habitats' | 'habitatDetails' | 'habitatForm' | 'feeding' | 'feedingPlanDetails' | 'feedingPlanForm';
 
@@ -18,6 +21,7 @@ interface AnimalDetailsPageProps {
   onNavigateBack: () => void;
   onNavigateTo: (view: ViewState) => void;
   onDeleteRequest: (animal: AnimalDashboard) => void;
+  onUpdateAnimal: (updatedAnimal: AnimalDashboard) => void; // New prop
 }
 
 const InfoCard: React.FC<{ title: string, children: React.ReactNode }> = ({ title, children }) => (
@@ -27,18 +31,21 @@ const InfoCard: React.FC<{ title: string, children: React.ReactNode }> = ({ titl
     </div>
 );
 
-const AnimalDetailsPage: React.FC<AnimalDetailsPageProps> = ({ 
-    animalId, 
-    animals, 
+const AnimalDetailsPage: React.FC<AnimalDetailsPageProps> = ({
+    animalId,
+    animals,
     keepers,
     vets,
     habitats,
     feedingPlans,
-    onNavigateBack, 
-    onNavigateTo, 
-    onDeleteRequest 
+    onNavigateBack,
+    onNavigateTo,
+    onDeleteRequest,
+    onUpdateAnimal // Destructure new prop
 }) => {
   const animal = animals.find(a => a.id === animalId);
+
+  const [isImageModalOpen, setIsImageModalOpen] = React.useState(false); // New state
 
   if (!animal) {
     return (
@@ -67,6 +74,44 @@ const AnimalDetailsPage: React.FC<AnimalDetailsPageProps> = ({
   const handleLinkClick = (e: React.MouseEvent, page: PageName, id: number) => {
       e.preventDefault();
       onNavigateTo({ page, params: { id } });
+  };
+
+  // New function to handle image selection and update
+  const handleImageSelect = async (imageUrl: string) => {
+      try {
+          // We need to send the full AnimalRequestDTO structure, even if only image changes
+          const animalRequestData = {
+              name: animal.name,
+              species: animal.species,
+              age: animal.age,
+              sex: animal.sex,
+              arrivalDate: animal.arrivalDate,
+              status: animal.status,
+              image: imageUrl, // The updated image
+              keeperId: animal.keeperId,
+              vetId: animal.vetId,
+              habitatId: animal.habitatId,
+              feedingPlanId: animal.feedingPlanId,
+          };
+
+          const response = await updateAnimal(animal.id, animalRequestData);
+
+          if (response) {
+              // Assuming response is the updated AnimalResponseDTO
+              const updatedAnimalDashboard: AnimalDashboard = {
+                  ...animal, // Keep existing fields
+                  image: response.image // Update only the image
+              };
+              onUpdateAnimal(updatedAnimalDashboard); // Notify parent to update animal list
+              setIsImageModalOpen(false); // Close modal
+          } else {
+              console.error('Failed to update animal image: No response');
+              // Handle error, e.g., show a toast notification
+          }
+      } catch (error) {
+          console.error('Error updating animal image:', error);
+          // Handle error, e.g., show a toast notification
+      }
   };
 
   return (
@@ -103,6 +148,15 @@ const AnimalDetailsPage: React.FC<AnimalDetailsPageProps> = ({
         <div className="lg:col-span-2 space-y-8">
             <div className="bg-brand-brown rounded-lg shadow-lg overflow-hidden border border-brand-gold/20">
                 <img src={displayAnimal.image} alt={displayAnimal.name} className="w-full h-80 object-cover" />
+                {/* New button to open image selection modal */}
+                <div className="p-4 text-center">
+                    <button
+                        onClick={() => setIsImageModalOpen(true)}
+                        className="bg-brand-gold text-dark-bg font-bold py-2 px-5 rounded-lg hover:opacity-90 transition-opacity shadow-md"
+                    >
+                        Atualizar Imagem
+                    </button>
+                </div>
             </div>
             <InfoCard title="Informações Principais">
                 <ul className="space-y-3 text-light-cream">
@@ -157,6 +211,12 @@ const AnimalDetailsPage: React.FC<AnimalDetailsPageProps> = ({
             </InfoCard>
         </div>
       </div>
+      <ImageSelectionModal
+          isOpen={isImageModalOpen}
+          onClose={() => setIsImageModalOpen(false)}
+          onSelectImage={handleImageSelect}
+          currentImage={animal.image}
+      />
     </div>
   );
 };
