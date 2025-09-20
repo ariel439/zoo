@@ -30,7 +30,7 @@ public class EmailService {
                     .html(body)
                     .build();
 
-            CreateEmailResponse response = resend.emails.send(createEmailOptions);
+            CreateEmailResponse response = resend.send(createEmailOptions);
             System.out.println("Email sent successfully. ID: " + response.getId());
         } catch (Exception e) {
             System.err.println("Error sending email: " + e.getMessage());
