@@ -48,8 +48,8 @@ public class AnimalService {
             logger.info("Attempting to send email for new animal: {}", savedAnimal.getName());
             cuidadorRepository.findById(savedAnimal.getKeeperId()).ifPresent(cuidador -> {
                 logger.info("Cuidador found for keeperId: {}. Contact email: {}", savedAnimal.getKeeperId(), cuidador.getContact());
-                String subject = "New Animal Assigned: " + savedAnimal.getName();
-                String body = String.format("Dear %s,<br><br>A new animal, <b>%s</b> (Species: %s), has been assigned to you.<br><br>Regards,<br>Zoo Management",
+                String subject = "Novo Animal Atribuído: " + savedAnimal.getName();
+                String body = String.format("Prezado(a) %s,<br><br>Um novo animal, <b>%s</b> (Espécie: %s), foi atribuído a você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
                         cuidador.getName(), savedAnimal.getName(), savedAnimal.getSpecies());
                 emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
             });
@@ -84,8 +84,8 @@ public class AnimalService {
                         logger.info("Attempting to send email for updated animal (new keeper): {}", updatedAnimal.getName());
                         cuidadorRepository.findById(updatedAnimal.getKeeperId()).ifPresent(cuidador -> {
                             logger.info("Cuidador found for new keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
-                            String subject = "Animal Assignment Updated: " + updatedAnimal.getName();
-                            String body = String.format("Dear %s,<br><br>The animal <b>%s</b> (Species: %s) has been assigned to you.<br><br>Regards,<br>Zoo Management",
+                            String subject = "Atribuição de Animal Atualizada: " + updatedAnimal.getName();
+                            String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi atribuído a você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
                                     cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
                             emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
                         });
@@ -94,8 +94,8 @@ public class AnimalService {
                         logger.info("Attempting to send email for updated animal (same keeper): {}", updatedAnimal.getName());
                         cuidadorRepository.findById(updatedAnimal.getKeeperId()).ifPresent(cuidador -> {
                             logger.info("Cuidador found for keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
-                            String subject = "Animal Details Updated: " + updatedAnimal.getName();
-                            String body = String.format("Dear %s,<br><br>Details for the animal <b>%s</b> (Species: %s), assigned to you, have been updated.<br><br>Regards,<br>Zoo Management",
+                            String subject = "Detalhes do Animal Atualizados: " + updatedAnimal.getName();
+                            String body = String.format("Prezado(a) %s,<br><br>Os detalhes do animal <b>%s</b> (Espécie: %s), atribuído a você, foram atualizados.<br><br>Atenciosamente,<br>Gerência do Zoológico",
                                     cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
                             emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
                         });
@@ -108,8 +108,8 @@ public class AnimalService {
                     if (oldKeeperId != null && (updatedAnimal.getKeeperId() == null || !updatedAnimal.getKeeperId().equals(oldKeeperId))) {
                          cuidadorRepository.findById(oldKeeperId).ifPresent(cuidador -> {
                             logger.info("Cuidador found for old keeperId: {}. Contact email: {}", oldKeeperId, cuidador.getContact());
-                            String subject = "Animal Unassigned: " + updatedAnimal.getName();
-                            String body = String.format("Dear %s,<br><br>The animal <b>%s</b> (Species: %s) has been unassigned from you.<br><br>Regards,<br>Zoo Management",
+                            String subject = "Animal Desatribuído: " + updatedAnimal.getName();
+                            String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi desatribuído de você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
                                     cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
                             emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
                         });
@@ -131,8 +131,8 @@ public class AnimalService {
                 logger.info("Attempting to send email for deleted animal: {}", animalToDelete.getName());
                 cuidadorRepository.findById(animalToDelete.getKeeperId()).ifPresent(cuidador -> {
                     logger.info("Cuidador found for keeperId: {}. Contact email: {}", animalToDelete.getKeeperId(), cuidador.getContact());
-                    String subject = "Animal Removed: " + animalToDelete.getName();
-                    String body = String.format("Dear %s,<br><br>The animal <b>%s</b> (Species: %s), which was assigned to you, has been removed from the system.<br><br>Regards,<br>Zoo Management",
+                    String subject = "Animal Removido: " + animalToDelete.getName();
+                    String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s), que estava atribuído a você, foi removido do sistema.<br><br>Atenciosamente,<br>Gerência do Zoológico",
                             cuidador.getName(), animalToDelete.getName(), animalToDelete.getSpecies());
                     emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
                 });
