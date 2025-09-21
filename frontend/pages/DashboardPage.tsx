@@ -431,6 +431,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
                     onNavigateBack={navigateBack}
                     onNavigateTo={navigateTo}
                     onDeleteRequest={(item) => handleDeleteRequest(item, 'animal')}
+                    onUpdateAnimal={(updatedAnimal) => saveData(updatedAnimal, 'animal')}
                 />;
             case 'animalForm':
                 return <AnimalFormPage 
