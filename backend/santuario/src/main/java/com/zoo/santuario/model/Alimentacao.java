@@ -28,5 +28,6 @@ public class Alimentacao {
     private String quantity;
     @Column(nullable = false)
     private String frequency;
+    private Long animalId;
 
 }

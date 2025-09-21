@@ -82,6 +82,13 @@ const KeeperFormPage: React.FC<KeeperFormPageProps> = ({ keeperId, keepers, onNa
                     <option>Inativo</option>
                 </select>
             </FormField>
+            <FormField label="Turno de Trabalho">
+                <select name="workShift" value={formData.workShift} onChange={handleChange} className={inputStyles}>
+                    <option>Manhã</option>
+                    <option>Tarde</option>
+                    <option>Noite</option>
+                </select>
+            </FormField>
             <div className="pt-6 flex justify-end space-x-4">
                 <button type="button" onClick={handleCancel} className="bg-transparent border-2 border-brand-gold/50 text-brand-gold/80 font-bold py-2 px-6 rounded-lg hover:bg-brand-gold/20">
                     Cancelar

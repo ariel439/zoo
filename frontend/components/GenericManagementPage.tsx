@@ -15,6 +15,8 @@ interface GenericManagementPageProps {
   onEditItem: (item: any) => void;
   onDeleteItem: (item: any) => void;
   onViewItem: (item: any) => void;
+  onFilter: (filters: any) => void; // Generic filter object
+  filterComponent?: React.ReactNode; // Optional component for specific filters
 }
 
 const GenericManagementPage: React.FC<GenericManagementPageProps> = ({ 
@@ -24,8 +26,16 @@ const GenericManagementPage: React.FC<GenericManagementPageProps> = ({
     onAddItem,
     onEditItem,
     onDeleteItem,
-    onViewItem
+    onViewItem,
+    onFilter,
+    filterComponent
 }) => {
+  const [searchTerm, setSearchTerm] = React.useState<string>('');
+
+  const handleFilter = () => {
+    onFilter({ searchTerm: searchTerm || undefined });
+  };
+
   return (
     <div className="text-light-cream">
       {/* Header */}
@@ -46,9 +56,14 @@ const GenericManagementPage: React.FC<GenericManagementPageProps> = ({
           <input 
             type="text" 
             placeholder="Buscar..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full md:w-auto bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream placeholder-light-cream/50 focus:outline-none focus:ring-2 focus:ring-brand-amber"
           />
-          <button className="w-full md:w-auto bg-transparent border-2 border-brand-gold text-brand-gold font-bold py-2 px-4 rounded-lg hover:bg-brand-gold hover:text-dark-bg transition-colors">
+          {filterComponent} {/* Render specific filter component here */}
+          <button 
+            onClick={handleFilter}
+            className="w-full md:w-auto bg-transparent border-2 border-brand-gold text-brand-gold font-bold py-2 px-4 rounded-lg hover:bg-brand-gold hover:text-dark-bg transition-colors">
             Filtrar
           </button>
         </div>

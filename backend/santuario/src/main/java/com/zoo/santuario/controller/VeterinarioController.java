@@ -18,8 +18,9 @@ public class VeterinarioController {
     private VeterinarioService veterinarioService;
 
     @GetMapping
-    public ResponseEntity<List<VeterinarioResponseDTO>> getAllVeterinarios() {
-        List<VeterinarioResponseDTO> veterinarios = veterinarioService.getAllVeterinarios();
+    public ResponseEntity<List<VeterinarioResponseDTO>> getVeterinarios(
+            @RequestParam(required = false) String specialty) {
+        List<VeterinarioResponseDTO> veterinarios = veterinarioService.getFilteredVeterinarios(specialty);
         return new ResponseEntity<>(veterinarios, HttpStatus.OK);
     }
 

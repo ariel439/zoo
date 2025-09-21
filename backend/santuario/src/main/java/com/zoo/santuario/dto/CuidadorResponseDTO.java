@@ -14,5 +14,6 @@ public class CuidadorResponseDTO {
     private String contact;
     private String specialty;
     private String status;
+    private String workShift;
 
 }

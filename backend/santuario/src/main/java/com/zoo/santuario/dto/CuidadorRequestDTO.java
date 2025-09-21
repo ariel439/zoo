@@ -18,5 +18,7 @@ public class CuidadorRequestDTO {
     private String specialty;
     @NotNull
     private String status;
+    @NotNull
+    private String workShift;
 
 }

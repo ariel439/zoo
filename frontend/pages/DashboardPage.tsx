@@ -25,10 +25,13 @@ import {
     createAnimal, updateAnimal, createCuidador, updateCuidador, createVeterinario, updateVeterinario,
     createHabitat, updateHabitat, createAlimentacao, updateAlimentacao
 } from '../services/api';
+import { ApiError } from '../utils/apiError';
+import { BackendError } from '../types/types';
 
 
 interface DashboardPageProps {
   setPage: (page: string) => void;
+  showToast: (message: string, type: 'success' | 'error', backendError?: BackendError) => void;
 }
 
 type PageName = 'dashboard' | 'animals' | 'animalDetails' | 'animalForm' | 'keepers' | 'keeperDetails' | 'keeperForm' | 'vets' | 'vetDetails' | 'vetForm' | 'habitats' | 'habitatDetails' | 'habitatForm' | 'feeding' | 'feedingPlanDetails' | 'feedingPlanForm';
@@ -240,13 +243,21 @@ const typeToNameMap: { [key: string]: string } = {
     feedingPlan: 'Plano de Alimentação',
 };
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
+const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => {
     // State for all data
     const [animals, setAnimals] = React.useState<AnimalDashboard[]>([]);
     const [keepers, setKeepers] = React.useState<Cuidador[]>([]);
     const [vets, setVets] = React.useState<Veterinario[]>([]);
     const [habitats, setHabitats] = React.useState<Habitat[]>([]);
     const [feedingPlans, setFeedingPlans] = React.useState<PlanoAlimentar[]>([]);
+
+    // Filter states
+    const [filterHabitatType, setFilterHabitatType] = React.useState<string>('');
+    const [filterKeeperSpecialty, setFilterKeeperSpecialty] = React.useState<string>('');
+    const [filterVetSpecialty, setFilterVetSpecialty] = React.useState<string>('');
+    const [filterFeedingFoodType, setFilterFeedingFoodType] = React.useState<string>('');
+    const [filterFeedingAnimalId, setFilterFeedingAnimalId] = React.useState<number | undefined>(undefined);
+
 
     React.useEffect(() => {
         const fetchData = async () => {
@@ -275,7 +286,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
     // Navigation and Modal State
     const [viewStack, setViewStack] = React.useState<ViewState[]>([{ page: 'dashboard' }]);
     const [modalState, setModalState] = React.useState<{ isOpen: boolean; itemToDelete: ModalItem | null }>({ isOpen: false, itemToDelete: null });
-    const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+    
 
     const currentView = viewStack[viewStack.length - 1];
 
@@ -346,9 +357,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
             setToastMessage(`${friendlyTypeName} "${itemName}" foi ${action} com sucesso.`);
             navigateBack();
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(`Failed to save ${type}`, error);
-            setToastMessage(`Erro ao salvar o item. Tente novamente mais tarde.`);
+            const errorMessage = error.message || `Erro ao salvar o item. Tente novamente mais tarde.`;
+            setToastMessage(errorMessage);
         }
     };
 
@@ -407,6 +419,72 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
         handleModalClose();
     };
 
+    const handleAnimalFilter = async (filters: { name?: string; species?: string; ageMin?: number; ageMax?: number }) => {
+        try {
+            const filteredAnimals = await getAnimals(filters.species, filters.ageMin, filters.ageMax, filters.name);
+            setAnimals(filteredAnimals);
+        } catch (error) {
+            console.error("Failed to filter animals", error);
+            setToastMessage("Erro ao filtrar animais. Tente novamente mais tarde.");
+        }
+    };
+
+    const handleHabitatFilter = async (type?: string) => {
+        try {
+            const filteredHabitats = await getHabitats(type);
+            setHabitats(filteredHabitats);
+        } catch (error) {
+            console.error("Failed to filter habitats", error);
+            setToastMessage("Erro ao filtrar habitats. Tente novamente mais tarde.");
+        }
+    };
+
+    React.useEffect(() => {
+        handleHabitatFilter(filterHabitatType);
+    }, [filterHabitatType]);
+
+    const handleKeeperFilter = async (specialty?: string) => {
+        try {
+            const filteredKeepers = await getCuidadores(specialty);
+            setKeepers(filteredKeepers);
+        } catch (error) {
+            console.error("Failed to filter keepers", error);
+            setToastMessage("Erro ao filtrar cuidadores. Tente novamente mais tarde.");
+        }
+    };
+
+    React.useEffect(() => {
+        handleKeeperFilter(filterKeeperSpecialty);
+    }, [filterKeeperSpecialty]);
+
+    const handleVetFilter = async (specialty?: string) => {
+        try {
+            const filteredVets = await getVeterinarios(specialty);
+            setVets(filteredVets);
+        } catch (error) {
+            console.error("Failed to filter veterinários", error);
+            setToastMessage("Erro ao filtrar veterinários. Tente novamente mais tarde.");
+        }
+    };
+
+    React.useEffect(() => {
+        handleVetFilter(filterVetSpecialty);
+    }, [filterVetSpecialty]);
+
+    const handleFeedingPlanFilter = async (foodType?: string, animalId?: number) => {
+        try {
+            const filteredFeedingPlans = await getAlimentacoes(foodType, animalId);
+            setFeedingPlans(filteredFeedingPlans);
+        } catch (error) {
+            console.error("Failed to filter planos de alimentação", error);
+            setToastMessage("Erro ao filtrar planos de alimentação. Tente novamente mais tarde.");
+        }
+    };
+
+    React.useEffect(() => {
+        handleFeedingPlanFilter(filterFeedingFoodType, filterFeedingAnimalId);
+    }, [filterFeedingFoodType, filterFeedingAnimalId]);
+
     // Content Rendering Logic
     const renderContent = () => {
         switch (currentView.page) {
@@ -419,6 +497,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
                     habitats={habitats}
                     onNavigateTo={navigateTo}
                     onDeleteRequest={(item) => handleDeleteRequest(item, 'animal')}
+                    onFilter={handleAnimalFilter}
                 />;
             case 'animalDetails':
                 return <AnimalDetailsPage 
@@ -451,6 +530,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
                     onEditItem={(item) => navigateTo({ page: 'keeperForm', params: { id: item.id } })}
                     onDeleteItem={(item) => handleDeleteRequest(item, 'keeper')}
                     onViewItem={(item) => navigateTo({ page: 'keeperDetails', params: { id: item.id } })}
+                    onFilter={handleKeeperFilter}
+                    filterComponent={
+                        <input 
+                            type="text" 
+                            placeholder="Filtrar por especialidade..." 
+                            value={filterKeeperSpecialty}
+                            onChange={(e) => setFilterKeeperSpecialty(e.target.value)}
+                            className="w-full md:w-auto bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream placeholder-light-cream/50 focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                        />
+                    }
                 />;
              case 'keeperDetails':
                 return <KeeperDetailsPage keeperId={currentView.params?.id} keepers={keepers} animals={animals} onNavigateBack={navigateBack} onNavigateTo={navigateTo}/>;
@@ -463,6 +552,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
                     onEditItem={(item) => navigateTo({ page: 'vetForm', params: { id: item.id } })}
                     onDeleteItem={(item) => handleDeleteRequest(item, 'vet')}
                     onViewItem={(item) => navigateTo({ page: 'vetDetails', params: { id: item.id }})}
+                    onFilter={handleVetFilter}
+                    filterComponent={
+                        <input 
+                            type="text" 
+                            placeholder="Filtrar por especialidade..." 
+                            value={filterVetSpecialty}
+                            onChange={(e) => setFilterVetSpecialty(e.target.value)}
+                            className="w-full md:w-auto bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream placeholder-light-cream/50 focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                        />
+                    }
                 />;
              case 'vetDetails':
                 return <VetDetailsPage vetId={currentView.params?.id} vets={vets} animals={animals} onNavigateBack={navigateBack} onNavigateTo={navigateTo}/>;
@@ -475,6 +574,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
                     onEditItem={(item) => navigateTo({ page: 'habitatForm', params: { id: item.id } })}
                     onDeleteItem={(item) => handleDeleteRequest(item, 'habitat')}
                     onViewItem={(item) => navigateTo({ page: 'habitatDetails', params: { id: item.id }})}
+                    onFilter={handleHabitatFilter}
+                    filterComponent={
+                        <select 
+                            value={filterHabitatType}
+                            onChange={(e) => setFilterHabitatType(e.target.value)}
+                            className="w-full md:w-auto bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream focus:outline-none focus:ring-2 focus:ring-brand-amber">
+                            <option value="">Filtrar por tipo</option>
+                            <option value="Aquático">Aquático</option>
+                            <option value="Terrestre">Terrestre</option>
+                            <option value="Aéreo">Aéreo</option>
+                        </select>
+                    }
                 />;
              case 'habitatDetails':
                 return <HabitatDetailsPage habitatId={currentView.params?.id} habitats={habitats} animals={animals} onNavigateBack={navigateBack} onNavigateTo={navigateTo}/>;
@@ -487,6 +598,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
                    onEditItem={(item) => navigateTo({ page: 'feedingPlanForm', params: { id: item.id }})}
                    onDeleteItem={(item) => handleDeleteRequest(item, 'feedingPlan')}
                    onViewItem={(item) => navigateTo({ page: 'feedingPlanDetails', params: { id: item.id }})}
+                   onFilter={handleFeedingPlanFilter}
+                   filterComponent={
+                        <div className="flex items-center gap-2">
+                            <select 
+                                value={filterFeedingFoodType}
+                                onChange={(e) => setFilterFeedingFoodType(e.target.value)}
+                                className="w-full md:w-auto bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream focus:outline-none focus:ring-2 focus:ring-brand-amber">
+                                <option value="">Filtrar por tipo de comida</option>
+                                <option value="Carne">Carne</option>
+                                <option value="Vegetais">Vegetais</option>
+                                <option value="Frutas">Frutas</option>
+                                <option value="Ração">Ração</option>
+                            </select>
+                            <input 
+                                type="number" 
+                                placeholder="ID do Animal" 
+                                value={filterFeedingAnimalId || ''}
+                                onChange={(e) => setFilterFeedingAnimalId(e.target.value ? parseInt(e.target.value) : undefined)}
+                                className="w-32 bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream placeholder-light-cream/50 focus:outline-none focus:ring-2 focus:ring-brand-amber" 
+                            />
+                        </div>
+                   }
                />;
             case 'feedingPlanDetails':
                 return <FeedingPlanDetailsPage planId={currentView.params?.id} plans={feedingPlans} animals={animals} onNavigateBack={navigateBack} onNavigateTo={navigateTo} />;

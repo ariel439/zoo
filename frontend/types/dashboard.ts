@@ -7,6 +7,8 @@ export interface Cuidador {
   specialty: string;
   contact: string; // Assumindo e-mail para notificações
   status: 'Ativo' | 'Férias' | 'Inativo';
+  workShift: 'Manhã' | 'Tarde' | 'Noite';
+}
 }
 
 export interface Veterinario {

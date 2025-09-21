@@ -23,6 +23,18 @@ public class VeterinarioService {
                 .collect(Collectors.toList());
     }
 
+    public List<VeterinarioResponseDTO> getFilteredVeterinarios(String specialty) {
+        List<Veterinario> veterinarios;
+        if (specialty != null) {
+            veterinarios = veterinarioRepository.findBySpecialty(specialty);
+        } else {
+            veterinarios = veterinarioRepository.findAll();
+        }
+        return veterinarios.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     public Optional<VeterinarioResponseDTO> getVeterinarioById(Long id) {
         return veterinarioRepository.findById(id)
                 .map(this::convertToDto);

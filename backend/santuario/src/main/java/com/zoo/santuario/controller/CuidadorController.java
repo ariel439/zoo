@@ -18,8 +18,9 @@ public class CuidadorController {
     private CuidadorService cuidadorService;
 
     @GetMapping
-    public ResponseEntity<List<CuidadorResponseDTO>> getAllCuidadores() {
-        List<CuidadorResponseDTO> cuidadores = cuidadorService.getAllCuidadores();
+    public ResponseEntity<List<CuidadorResponseDTO>> getCuidadores(
+            @RequestParam(required = false) String specialty) {
+        List<CuidadorResponseDTO> cuidadores = cuidadorService.getFilteredCuidadores(specialty);
         return new ResponseEntity<>(cuidadores, HttpStatus.OK);
     }
 

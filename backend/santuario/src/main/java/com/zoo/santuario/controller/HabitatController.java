@@ -18,8 +18,9 @@ public class HabitatController {
     private HabitatService habitatService;
 
     @GetMapping
-    public ResponseEntity<List<HabitatResponseDTO>> getAllHabitats() {
-        List<HabitatResponseDTO> habitats = habitatService.getAllHabitats();
+    public ResponseEntity<List<HabitatResponseDTO>> getHabitats(
+            @RequestParam(required = false) String type) {
+        List<HabitatResponseDTO> habitats = habitatService.getFilteredHabitats(type);
         return new ResponseEntity<>(habitats, HttpStatus.OK);
     }
 

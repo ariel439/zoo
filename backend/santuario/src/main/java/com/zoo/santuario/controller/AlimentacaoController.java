@@ -18,8 +18,10 @@ public class AlimentacaoController {
     private AlimentacaoService alimentacaoService;
 
     @GetMapping
-    public ResponseEntity<List<AlimentacaoResponseDTO>> getAllAlimentacoes() {
-        List<AlimentacaoResponseDTO> alimentacoes = alimentacaoService.getAllAlimentacoes();
+    public ResponseEntity<List<AlimentacaoResponseDTO>> getAlimentacoes(
+            @RequestParam(required = false) String foodType,
+            @RequestParam(required = false) Long animalId) {
+        List<AlimentacaoResponseDTO> alimentacoes = alimentacaoService.getFilteredAlimentacoes(foodType, animalId);
         return new ResponseEntity<>(alimentacoes, HttpStatus.OK);
     }
 

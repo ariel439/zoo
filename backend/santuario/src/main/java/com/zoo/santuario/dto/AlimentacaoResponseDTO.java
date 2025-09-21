@@ -15,5 +15,6 @@ public class AlimentacaoResponseDTO {
     private String foodType;
     private String quantity;
     private String frequency;
+    private Long animalId;
 
 }

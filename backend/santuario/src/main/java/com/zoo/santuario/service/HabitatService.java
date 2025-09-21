@@ -23,6 +23,18 @@ public class HabitatService {
                 .collect(Collectors.toList());
     }
 
+    public List<HabitatResponseDTO> getFilteredHabitats(String type) {
+        List<Habitat> habitats;
+        if (type != null) {
+            habitats = habitatRepository.findByType(type);
+        } else {
+            habitats = habitatRepository.findAll();
+        }
+        return habitats.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     public Optional<HabitatResponseDTO> getHabitatById(Long id) {
         return habitatRepository.findById(id)
                 .map(this::convertToDto);

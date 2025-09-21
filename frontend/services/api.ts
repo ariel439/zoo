@@ -1,11 +1,40 @@
-import { AlimentacaoRequestDTO, AlimentacaoResponseDTO, AnimalRequestDTO, AnimalResponseDTO, CuidadorRequestDTO, CuidadorResponseDTO, HabitatRequestDTO, HabitatResponseDTO, VeterinarioRequestDTO, VeterinarioResponseDTO, } from '../types';
+import { AlimentacaoRequestDTO, AlimentacaoResponseDTO, AnimalRequestDTO, AnimalResponseDTO, CuidadorRequestDTO, CuidadorResponseDTO, HabitatRequestDTO, HabitatResponseDTO, VeterinarioRequestDTO, VeterinarioResponseDTO, BackendError } from '../types/types';
+import { ApiError } from '../utils/apiError';
 
 const BASE_URL = 'https://zoo-production.up.railway.app/api';
 
 const handleResponse = async (response: Response) => {
     if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Network response was not ok: ${error}`);
+        let errorData: BackendError = {
+            timestamp: new Date().toISOString(),
+            status: response.status,
+            error: 'Unknown Error',
+            message: `Network response was not ok (Status: ${response.status})`,
+            path: response.url,
+        };
+
+        try {
+            const errorBody = await response.json();
+            // Check if the errorBody matches the BackendError structure
+            if (errorBody && typeof errorBody === 'object' && errorBody.message) {
+                errorData = {
+                    timestamp: errorBody.timestamp || errorData.timestamp,
+                    status: errorBody.status || errorData.status,
+                    error: errorBody.error || errorData.error,
+                    message: errorBody.message,
+                    path: errorBody.path || errorData.path,
+                };
+            } else if (typeof errorBody === 'string') {
+                errorData.message = errorBody;
+            }
+        } catch (e) {
+            const errorText = await response.text();
+            if (errorText) {
+                errorData.message = errorText;
+            }
+        }
+        // Throw an ApiError object that contains the structured error data
+        throw new ApiError(errorData.message, errorData);
     }
     if (response.status === 204) { // No Content
         return null;
@@ -14,8 +43,23 @@ const handleResponse = async (response: Response) => {
 };
 
 // Animal API
-export const getAnimals = async (): Promise<AnimalResponseDTO[]> => {
-    const response = await fetch(`${BASE_URL}/animals`);
+export const getAnimals = async (species?: string, ageMin?: number, ageMax?: number, name?: string): Promise<AnimalResponseDTO[]> => {
+    const params = new URLSearchParams();
+    if (species) {
+        params.append('species', species);
+    }
+    if (ageMin) {
+        params.append('ageMin', ageMin.toString());
+    }
+    if (ageMax) {
+        params.append('ageMax', ageMax.toString());
+    }
+    if (name) {
+        params.append('name', name);
+    }
+    const queryString = params.toString();
+    const url = `${BASE_URL}/animals${queryString ? `?${queryString}` : ''}`;
+    const response = await fetch(url);
     return handleResponse(response);
 };
 
@@ -49,8 +93,14 @@ export const deleteAnimal = async (id: number): Promise<void> => {
 };
 
 // Habitat API
-export const getHabitats = async (): Promise<HabitatResponseDTO[]> => {
-    const response = await fetch(`${BASE_URL}/habitats`);
+export const getHabitats = async (type?: string): Promise<HabitatResponseDTO[]> => {
+    const params = new URLSearchParams();
+    if (type) {
+        params.append('type', type);
+    }
+    const queryString = params.toString();
+    const url = `${BASE_URL}/habitats${queryString ? `?${queryString}` : ''}`;
+    const response = await fetch(url);
     return handleResponse(response);
 };
 
@@ -84,8 +134,14 @@ export const deleteHabitat = async (id: number): Promise<void> => {
 };
 
 // Cuidador API
-export const getCuidadores = async (): Promise<CuidadorResponseDTO[]> => {
-    const response = await fetch(`${BASE_URL}/cuidadores`);
+export const getCuidadores = async (specialty?: string): Promise<CuidadorResponseDTO[]> => {
+    const params = new URLSearchParams();
+    if (specialty) {
+        params.append('specialty', specialty);
+    }
+    const queryString = params.toString();
+    const url = `${BASE_URL}/cuidadores${queryString ? `?${queryString}` : ''}`;
+    const response = await fetch(url);
     return handleResponse(response);
 };
 
@@ -119,8 +175,14 @@ export const deleteCuidador = async (id: number): Promise<void> => {
 };
 
 // Veterinario API
-export const getVeterinarios = async (): Promise<VeterinarioResponseDTO[]> => {
-    const response = await fetch(`${BASE_URL}/veterinarios`);
+export const getVeterinarios = async (specialty?: string): Promise<VeterinarioResponseDTO[]> => {
+    const params = new URLSearchParams();
+    if (specialty) {
+        params.append('specialty', specialty);
+    }
+    const queryString = params.toString();
+    const url = `${BASE_URL}/veterinarios${queryString ? `?${queryString}` : ''}`;
+    const response = await fetch(url);
     return handleResponse(response);
 };
 
@@ -154,8 +216,17 @@ export const deleteVeterinario = async (id: number): Promise<void> => {
 };
 
 // Alimentacao API
-export const getAlimentacoes = async (): Promise<AlimentacaoResponseDTO[]> => {
-    const response = await fetch(`${BASE_URL}/alimentacoes`);
+export const getAlimentacoes = async (foodType?: string, animalId?: number): Promise<AlimentacaoResponseDTO[]> => {
+    const params = new URLSearchParams();
+    if (foodType) {
+        params.append('foodType', foodType);
+    }
+    if (animalId) {
+        params.append('animalId', animalId.toString());
+    }
+    const queryString = params.toString();
+    const url = `${BASE_URL}/alimentacoes${queryString ? `?${queryString}` : ''}`;
+    const response = await fetch(url);
     return handleResponse(response);
 };
 

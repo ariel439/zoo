@@ -20,5 +20,6 @@ public class AlimentacaoRequestDTO {
     private String quantity;
     @NotNull
     private String frequency;
+    private Long animalId;
 
 }

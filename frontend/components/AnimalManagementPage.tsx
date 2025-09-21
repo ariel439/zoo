@@ -13,10 +13,24 @@ interface AnimalManagementPageProps {
   habitats: Habitat[];
   onNavigateTo: (view: ViewState) => void;
   onDeleteRequest: (animal: AnimalDashboard) => void;
+  onFilter: (filters: { name?: string; species?: string; ageMin?: number; ageMax?: number }) => void;
 }
 
-const AnimalManagementPage: React.FC<AnimalManagementPageProps> = ({ animals, keepers, habitats, onNavigateTo, onDeleteRequest }) => {
-  
+const AnimalManagementPage: React.FC<AnimalManagementPageProps> = ({ animals, keepers, habitats, onNavigateTo, onDeleteRequest, onFilter }) => {
+  const [filterName, setFilterName] = React.useState<string>('');
+  const [filterSpecies, setFilterSpecies] = React.useState<string>('');
+  const [filterAgeMin, setFilterAgeMin] = React.useState<number | undefined>(undefined);
+  const [filterAgeMax, setFilterAgeMax] = React.useState<number | undefined>(undefined);
+
+  const handleFilter = () => {
+    onFilter({
+      name: filterName || undefined,
+      species: filterSpecies === 'Filtrar por espécie' ? undefined : filterSpecies || undefined,
+      ageMin: filterAgeMin,
+      ageMax: filterAgeMax,
+    });
+  };
+
   const getKeeperName = (keeperId: number) => keepers.find(k => k.id === keeperId)?.name || 'N/A';
   const getHabitatName = (habitatId: number) => habitats.find(h => h.id === habitatId)?.name || 'N/A';
 
@@ -40,19 +54,38 @@ const AnimalManagementPage: React.FC<AnimalManagementPageProps> = ({ animals, ke
           <input 
             type="text" 
             placeholder="Buscar por nome..." 
+            value={filterName}
+            onChange={(e) => setFilterName(e.target.value)}
             className="w-full md:w-auto bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream placeholder-light-cream/50 focus:outline-none focus:ring-2 focus:ring-brand-amber"
           />
-          <select className="w-full md:w-auto bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream focus:outline-none focus:ring-2 focus:ring-brand-amber">
-            <option>Filtrar por espécie</option>
-            <option>Leão</option>
-            <option>Mico-Leão-Dourado</option>
-            <option>Tucano</option>
+          <select 
+            value={filterSpecies}
+            onChange={(e) => setFilterSpecies(e.target.value)}
+            className="w-full md:w-auto bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream focus:outline-none focus:ring-2 focus:ring-brand-amber">
+            <option value="">Filtrar por espécie</option>
+            <option value="Leão">Leão</option>
+            <option value="Mico-Leão-Dourado">Mico-Leão-Dourado</option>
+            <option value="Tucano">Tucano</option>
           </select>
           <div className="flex items-center gap-2">
-             <input type="number" placeholder="Idade Mín" className="w-24 bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream placeholder-light-cream/50 focus:outline-none focus:ring-2 focus:ring-brand-amber" />
-             <input type="number" placeholder="Idade Máx" className="w-24 bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream placeholder-light-cream/50 focus:outline-none focus:ring-2 focus:ring-brand-amber" />
+             <input 
+                type="number" 
+                placeholder="Idade Mín" 
+                value={filterAgeMin || ''}
+                onChange={(e) => setFilterAgeMin(e.target.value ? parseInt(e.target.value) : undefined)}
+                className="w-24 bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream placeholder-light-cream/50 focus:outline-none focus:ring-2 focus:ring-brand-amber" 
+             />
+             <input 
+                type="number" 
+                placeholder="Idade Máx" 
+                value={filterAgeMax || ''}
+                onChange={(e) => setFilterAgeMax(e.target.value ? parseInt(e.target.value) : undefined)}
+                className="w-24 bg-dark-bg/50 border border-brand-gold/30 rounded-lg py-2 px-3 text-light-cream placeholder-light-cream/50 focus:outline-none focus:ring-2 focus:ring-brand-amber" 
+             />
           </div>
-          <button className="w-full md:w-auto bg-transparent border-2 border-brand-gold text-brand-gold font-bold py-2 px-4 rounded-lg hover:bg-brand-gold hover:text-dark-bg transition-colors">
+          <button 
+            onClick={handleFilter}
+            className="w-full md:w-auto bg-transparent border-2 border-brand-gold text-brand-gold font-bold py-2 px-4 rounded-lg hover:bg-brand-gold hover:text-dark-bg transition-colors">
             Filtrar
           </button>
         </div>

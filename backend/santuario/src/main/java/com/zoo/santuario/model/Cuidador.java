@@ -25,6 +25,8 @@ public class Cuidador {
     @Column(nullable = false)
     private String specialty;
     @Column(nullable = false)
-    private String status;
+    private String status; // This field represents the general employment status (e.g., 'Active', 'On Leave'), not the work shift.
+    @Column(nullable = false)
+    private String workShift; // Represents the work shift of the caretaker (e.g., 'Morning', 'Afternoon', 'Night')
 
 }

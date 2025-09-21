@@ -23,6 +23,23 @@ public class AlimentacaoService {
                 .collect(Collectors.toList());
     }
 
+    public List<AlimentacaoResponseDTO> getFilteredAlimentacoes(String foodType, Long animalId) {
+        List<Alimentacao> alimentacoes;
+        if (foodType != null && animalId != null) {
+            alimentacoes = alimentacaoRepository.findByFoodTypeAndAnimalId(foodType, animalId);
+        } else if (foodType != null) {
+            alimentacoes = alimentacaoRepository.findByFoodType(foodType);
+        } else if (animalId != null) {
+            alimentacoes = alimentacaoRepository.findByAnimalId(animalId);
+        }
+        else {
+            alimentacoes = alimentacaoRepository.findAll();
+        }
+        return alimentacoes.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     public Optional<AlimentacaoResponseDTO> getAlimentacaoById(Long id) {
         return alimentacaoRepository.findById(id)
                 .map(this::convertToDto);
@@ -42,6 +59,7 @@ public class AlimentacaoService {
                     existingAlimentacao.setFoodType(alimentacaoRequestDTO.getFoodType());
                     existingAlimentacao.setQuantity(alimentacaoRequestDTO.getQuantity());
                     existingAlimentacao.setFrequency(alimentacaoRequestDTO.getFrequency());
+                    existingAlimentacao.setAnimalId(alimentacaoRequestDTO.getAnimalId());
                     Alimentacao updatedAlimentacao = alimentacaoRepository.save(existingAlimentacao);
                     return convertToDto(updatedAlimentacao);
                 });
@@ -62,7 +80,8 @@ public class AlimentacaoService {
                 alimentacao.getAnimalSpecies(),
                 alimentacao.getFoodType(),
                 alimentacao.getQuantity(),
-                alimentacao.getFrequency()
+                alimentacao.getFrequency(),
+                alimentacao.getAnimalId()
         );
     }
 
@@ -73,7 +92,8 @@ public class AlimentacaoService {
                 alimentacaoRequestDTO.getAnimalSpecies(),
                 alimentacaoRequestDTO.getFoodType(),
                 alimentacaoRequestDTO.getQuantity(),
-                alimentacaoRequestDTO.getFrequency()
+                alimentacaoRequestDTO.getFrequency(),
+                alimentacaoRequestDTO.getAnimalId()
         );
     }
 }

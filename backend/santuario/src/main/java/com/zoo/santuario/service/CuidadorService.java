@@ -23,6 +23,18 @@ public class CuidadorService {
                 .collect(Collectors.toList());
     }
 
+    public List<CuidadorResponseDTO> getFilteredCuidadores(String specialty) {
+        List<Cuidador> cuidadores;
+        if (specialty != null) {
+            cuidadores = cuidadorRepository.findBySpecialty(specialty);
+        } else {
+            cuidadores = cuidadorRepository.findAll();
+        }
+        return cuidadores.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     public Optional<CuidadorResponseDTO> getCuidadorById(Long id) {
         return cuidadorRepository.findById(id)
                 .map(this::convertToDto);
@@ -50,6 +62,7 @@ public class CuidadorService {
                     existingCuidador.setContact(cuidadorRequestDTO.getContact());
                     existingCuidador.setSpecialty(cuidadorRequestDTO.getSpecialty());
                     existingCuidador.setStatus(cuidadorRequestDTO.getStatus());
+                    existingCuidador.setWorkShift(cuidadorRequestDTO.getWorkShift());
                     Cuidador updatedCuidador = cuidadorRepository.save(existingCuidador);
                     return convertToDto(updatedCuidador);
                 });
@@ -69,7 +82,8 @@ public class CuidadorService {
                 cuidador.getName(),
                 cuidador.getContact(),
                 cuidador.getSpecialty(),
-                cuidador.getStatus()
+                cuidador.getStatus(),
+                cuidador.getWorkShift()
         );
     }
 
@@ -79,7 +93,8 @@ public class CuidadorService {
                 cuidadorRequestDTO.getName(),
                 cuidadorRequestDTO.getContact(),
                 cuidadorRequestDTO.getSpecialty(),
-                cuidadorRequestDTO.getStatus()
+                cuidadorRequestDTO.getStatus(),
+                cuidadorRequestDTO.getWorkShift()
         );
     }
 }

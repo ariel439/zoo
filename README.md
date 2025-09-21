@@ -1,146 +1,224 @@
-# Santuário - Frontend React
+# 🐾 Zoo Management System 🌿
 
-## Descrição
+## ✨ Project Overview
 
-Este projeto é um frontend moderno e completo para o **Santuário**, uma plataforma de gerenciamento de zoológicos. Construído com React, TypeScript e Tailwind CSS, ele oferece uma experiência de usuário rica e uma interface de administração robusta, pronta para ser integrada com uma API backend, como a desenvolvida com Spring Boot.
+Welcome to the **Zoo Management System**! This project implements a **RESTful API** designed to manage comprehensive information for a modern zoo. It allows for the creation, reading, updating, and deletion of data across several key entities, along with advanced filtering capabilities and essential business rules. The system also includes a public-facing website for visitors and a robust administrative panel for staff, built with Spring Boot for the backend and React with TypeScript for the frontend.
 
-A aplicação se divide em duas partes principais:
-1.  **Site Público:** Uma interface visualmente atraente para visitantes, apresentando informações sobre o santuário, seus animais e como visitá-lo.
-2.  **Painel de Gerenciamento:** Uma área restrita para funcionários, permitindo o gerenciamento completo (CRUD) de todas as entidades principais do zoológico.
+🔗 **Live Demo:** [https://zoo-front-production.up.railway.app/](https://zoo-front-production.up.railway.app/)
 
----
+## 🚀 Features
 
-## Funcionalidades
+This system provides a comprehensive RESTful API to manage zoo operations, fulfilling the following core requirements:
 
-### Site Público
-- **Página Inicial Dinâmica:** Carousel de heróis, seções sobre a missão e a equipe do santuário.
-- **Galeria de Animais:** Apresentação detalhada dos animais residentes.
-- **Informações de Visita:** Mapa, horários de funcionamento e formulário de contato.
+### 🐘 Entities & CRUD Operations
 
-### Painel de Gerenciamento (Dashboard)
-- **Dashboard Geral:** Visão geral com estatísticas, alertas importantes e atividades recentes.
-- **Gerenciamento de Entidades (CRUD Completo):**
-    - **Animais:** Cadastro, edição, visualização de detalhes e exclusão.
-    - **Cuidadores:** Gestão da equipe de cuidadores.
-    - **Veterinários:** Gestão da equipe de veterinários.
-    - **Habitats:** Gerenciamento dos habitats, incluindo capacidade e status.
-    - **Planos de Alimentação:** Criação e atribuição de dietas.
-- **Navegação Intuitiva:** Sistema de navegação por abas e breadcrumbs para fácil localização.
-- **Componentes Reutilizáveis:** Páginas de gerenciamento genéricas, modais de confirmação e notificações (toasts) para uma UX consistente.
+The API manages the following 5 core entities, each supporting full **CRUD (Create, Read, Update, Delete)** operations:
 
----
+1.  **Animal:**
+    *   Attributes: `id`, `nome`, `espécie`, `idade`, `habitat` (reference to Habitat), `cuidador responsável` (reference to Cuidador).
+    *   Operations: Create, List, Update, Delete animals.
+2.  **Habitat:**
+    *   Attributes: `id`, `nome` (e.g., Savana, Floresta, Aquário, Terrário), `tipo` (e.g., terrestre, aquático, aéreo), `capacidade máxima de animais`.
+    *   Operations: Create, List, Update, Delete habitats.
+3.  **Cuidador (Caretaker):**
+    *   Attributes: `id`, `nome`, `especialidade` (e.g., mamíferos, répteis, aves), `turno de trabalho`.
+    *   Operations: Create, List, Update, Delete caretakers.
+4.  **Veterinário (Veterinarian):**
+    *   Attributes: `id`, `nome`, `CRMV`, `especialidade` (e.g., felinos, aves exóticas).
+    *   Operations: Create, List, Update, Delete veterinarians.
+5.  **Alimentação (Feeding Plan):**
+    *   Attributes: `id`, `tipo de comida` (e.g., carne, frutas, ração especial), `quantidade diária`, `animal` (reference to Animal).
+    *   Operations: Create, List, Update, Delete feeding plans.
 
-## Tecnologias Utilizadas
+### 🔍 Query Endpoints with Filters
 
-- **React 19:** Para a construção de interfaces de usuário reativas e componentizadas.
-- **TypeScript:** Para garantir um código mais seguro, legível e manutenível.
-- **Tailwind CSS:** Para uma estilização rápida, customizável e responsiva.
-- **ES Modules:** Utilizando import maps para gerenciar dependências sem a necessidade de um bundler como Webpack ou Vite.
+The API provides specific endpoints for querying information with filters:
 
----
+*   **Animal:**
+    *   Search by `espécie` (e.g., `GET /animais?especie=Leão`).
+    *   Search by `idade mínima/máxima` (e.g., `GET /animais?idadeMin=5&idadeMax=10`).
+    *   Search by `nome parcial`.
+*   **Habitat:**
+    *   Search by `tipo` (e.g., `GET /habitats?tipo=terrestre`).
+*   **Cuidador:**
+    *   Search by `especialidade`.
+    *   Search by `turno de trabalho`.
+*   **Veterinário:**
+    *   Search by `especialidade`.
+*   **Alimentação:**
+    *   Search by `tipo de comida`.
+    *   Search by `animal` (by `animalId`, e.g., `GET /alimentacoes?animalId=3`).
 
-## Estrutura do Projeto
+### 📧 Email Notification Feature
 
-O código-fonte está organizado de forma lógica para facilitar a manutenção e escalabilidade.
+The system includes an automated email notification feature for caretakers (cuidadores) when animals are assigned, updated, or deleted, ensuring timely communication regarding their responsibilities.
 
+### 🌐 Frontend (User & Admin Interface)
+
+*   **Public Site:**
+    *   🖼️ Dynamic Home Page with Hero Carousel.
+    *   🦁 Animal Gallery showcasing detailed information about residents.
+    *   🗺️ Visit Information (map, opening hours) and Contact Form.
+*   **Management Dashboard (Admin Panel):**
+    *   📊 Overview Dashboard with statistics and alerts.
+    *   Intuitive Navigation with tabs and breadcrumbs.
+    *   Reusable components for consistent UX (modals, notifications).
+
+## ⚖️ Business Rules
+
+The system enforces the following mandatory business rules:
+
+*   **Habitat Capacity:** A habitat cannot exceed its maximum capacity of animals.
+*   **Caretaker Association:** Each animal must have at least one caretaker associated.
+
+## 🛠️ Technologies Used
+
+### Frontend
+
+*   **React:** Building dynamic and interactive user interfaces.
+*   **TypeScript:** Enhanced code quality, readability, and maintainability.
+*   **Vite:** Lightning-fast development experience and optimized builds.
+*   **HTML/CSS:** Standard web technologies for structure and styling.
+*   **Axios:** Promise-based HTTP client for API communication.
+
+### Backend
+
+*   **Spring Boot:** Rapid development of robust, stand-alone applications.
+*   **Maven:** Dependency management and build automation.
+*   **MySQL:** Reliable relational database for data persistence.
+*   **Spring Data JPA:** Simplified data access layer.
+*   **Lombok:** Reduced boilerplate code.
+*   **SendGrid:** Email service for notifications.
+*   **SpringDoc OpenAPI:** Automated API documentation.
+*   **Testcontainers:** For integration testing with real services (e.g., MySQL).
+
+## 🏗️ Architecture
+
+The system follows a client-server architecture:
+
+*   **Frontend:** A React application that consumes RESTful APIs provided by the backend.
+*   **Backend:** A Spring Boot application that exposes RESTful APIs, handles business logic, interacts with the MySQL database, and sends email notifications.
+*   **Database:** MySQL for persistent storage of all zoo-related data.
+
+```mermaid
+graph TD
+    A[User/Admin Browser] -->|HTTP/HTTPS| B(Frontend - React/TypeScript)
+    B -->|REST API Calls| C(Backend - Spring Boot)
+    C -->|JPA/JDBC| D[Database - MySQL]
+    C -->|Email Notifications| E[SendGrid]
 ```
-/
-├── components/       # Componentes reutilizáveis (Navbar, Cards, Ícones, etc.)
-├── pages/            # Componentes de página (DashboardPage, AnimalGalleryPage, etc.)
-├── services/         # Lógica para chamadas à API (pronto para implementação)
-├── types/            # Definições de tipos TypeScript
-│   ├── site.ts       # Tipos para o site público
-│   └── dashboard.ts  # Tipos (DTOs) para o painel de gerenciamento (backend)
-├── index.html        # Ponto de entrada da aplicação
-├── index.tsx         # Renderização principal do React
-└── README.md         # Esta documentação
+
+## 🚀 Getting Started (Local Development)
+
+To set up and run the project locally, follow these steps:
+
+### Prerequisites
+
+*   Java 17 or higher
+*   Node.js (LTS version) & npm/yarn
+*   Maven
+*   MySQL Server
+*   Git
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd zoo
 ```
 
----
+### 2. Backend Setup
 
-## Guia de Integração com o Backend (Spring Boot)
+Navigate to the backend directory:
 
-Este frontend foi projetado para se conectar perfeitamente a uma API RESTful, como a especificada no projeto do zoológico em Spring Boot. Todas as interfaces e fluxos de dados já estão prontos.
+```bash
+cd backend/santuario
+```
 
-### Mapeamento de Requisitos
+*   **Database Configuration:**
+    *   Create a MySQL database (e.g., `zoo_db`).
+    *   Update `src/main/resources/application.properties` with your MySQL connection details (username, password, database name).
+    *   Ensure `spring.jpa.hibernate.ddl-auto` is set to `update` or `create` for initial schema generation (change to `validate` or `none` for production).
+*   **Email Service Configuration:**
+    *   Obtain a SendGrid API Key.
+    *   Set `SENDGRID_API_KEY` and `SENDGRID_FROM_EMAIL` in your environment variables or `application.properties`.
+*   **Build and Run:**
 
-- **Entidades (`/types/dashboard.ts`):**
-  - **Animal (`AnimalDashboard`):** Mapeia diretamente os campos `id`, `nome` (name), `especie` (species), `idade` (age) e os IDs relacionais.
-  - **Habitat (`Habitat`):** Suporta `id`, `nome`, `tipo` e `capacidade`.
-  - **Cuidador (`Cuidador`):** Suporta `id`, `nome` e `especialidade`.
-  - **Veterinário (`Veterinario`):** Suporta `id`, `nome`, `CRMV` e `especialidade`.
-  - **Alimentação (`PlanoAlimentar`):** Corresponde a um plano alimentar, com suporte para `id`, `tipoDeComida`, `quantidade`, etc.
+```bash
+mvn clean install
+mvn spring-boot:run
+```
 
-- **Funcionalidades (CRUD & Filtros):**
-  - **CRUD:** Para cada entidade, o frontend já possui componentes de **Criação** (formulário), **Leitura** (lista e detalhes), **Atualização** (reaproveitamento do formulário) e **Exclusão** (com modal de confirmação).
-  - **Filtros:** A UI em `AnimalManagementPage.tsx` e `GenericManagementPage.tsx` já contém os campos de input e select para implementar as chamadas de filtro da sua API (ex: `GET /animais?especie=...`).
+The backend API will be accessible at `http://localhost:8080` (or your configured port).
 
-### Passos para a Integração
+### 3. Frontend Setup
 
-1.  **Configurar o Proxy (se necessário):** Se o frontend e o backend rodarem em portas diferentes, configure um proxy para evitar problemas de CORS. Em um ambiente de produção, isso geralmente é tratado pelo servidor web (Nginx, Apache).
+Navigate to the frontend directory:
 
-2.  **Implementar as Chamadas de API em `/services/api.ts`:**
-    Este arquivo é o local central para toda a comunicação com o backend. Substitua os dados mockados por chamadas `fetch` reais.
+```bash
+cd ../../frontend
+```
 
-    **Exemplo: Buscar todos os animais**
-    ```typescript
-    // Em services/api.ts
-    export const getAnimals = async () => {
-      try {
-        const response = await fetch('/api/animais'); // Ajuste a URL da sua API
-        if (!response.ok) {
-          throw new Error('A resposta da rede não foi bem-sucedida');
-        }
-        return await response.json();
-      } catch (error) {
-        console.error("Falha ao buscar animais:", error);
-        throw error;
-      }
-    };
-    ```
+*   **Install Dependencies:**
 
-3.  **Conectar Componentes ao Serviço da API:**
-    Em `pages/DashboardPage.tsx`, use o hook `useEffect` para carregar os dados iniciais, substituindo os arrays de dados mockados.
+```bash
+npm install
+# or yarn install
+```
 
-    **Exemplo: Carregar animais no Dashboard**
-    ```typescript
-    // Em pages/DashboardPage.tsx
-    import { getAnimals } from '../services/api'; // Importe a função
+*   **Run the Development Server:**
 
-    const DashboardPage: React.FC<DashboardPageProps> = ({ setPage }) => {
-      const [animals, setAnimals] = React.useState<AnimalDashboard[]>([]); // Inicie como vazio
-      const [loading, setLoading] = React.useState(true);
+```bash
+npm run dev
+# or yarn dev
+```
 
-      React.useEffect(() => {
-        const loadData = async () => {
-          try {
-            const animalsData = await getAnimals();
-            setAnimals(animalsData);
-          } catch (error) {
-            // Trate o erro, talvez com uma notificação
-            setToastMessage("Erro ao carregar os dados dos animais.");
-          } finally {
-            setLoading(false);
-          }
-        };
-        loadData();
-      }, []); // O array vazio garante que isso rode apenas uma vez
+The frontend application will be accessible at `http://localhost:5173` (or your configured Vite port).
 
-      // ... resto do componente
-    };
-    ```
+### 4. Running Tests
 
-4.  **Implementar Funções de `save` e `delete`:**
-    Conecte as funções `saveData` e `handleConfirmDelete` em `DashboardPage.tsx` para fazer chamadas `POST`, `PUT` e `DELETE` para sua API. O frontend já está preparado para enviar os dados no formato correto.
+To run the backend integration and unit tests:
 
----
+*   **Prerequisite:** Ensure **Docker is running** on your machine, as integration tests use Testcontainers to spin up a real MySQL database.
+*   Navigate to the backend directory:
 
-## Como Iniciar
+```bash
+cd backend/santuario
+```
 
-Como este projeto não utiliza um passo de build complexo (como Vite ou Webpack), você pode simplesmente abrir o arquivo `index.html` em um navegador moderno ou usar uma extensão de servidor local (como o "Live Server" no VS Code) para servir os arquivos estáticos.
+*   **Execute Tests:**
 
----
+```bash
+./mvnw test
+```
+(On Windows, use `mvnw.cmd test`)
 
-## Conclusão
+*   **Interpreting Results:** Look for `[INFO] BUILD SUCCESS` at the end of the output. If `[INFO] BUILD FAILURE` occurs, check the `Failures` and `Errors` counts in the test summary for details.
 
-Este frontend é uma base sólida, completa e profissional. Ele atende a todos os requisitos de UI para o sistema de gerenciamento do santuário e está projetado para uma integração rápida e eficiente com o backend Spring Boot.
+## 📧 Email Notification Walkthrough
+
+This system includes an email notification feature for caretakers (cuidadores) when animals are assigned, updated, or deleted. Follow these steps to test it:
+
+1.  **Ensure Backend Email Configuration:**
+    *   Make sure your backend is configured with a valid SendGrid API Key and `SENDGRID_FROM_EMAIL` as described in the "Backend Setup" section.
+
+2.  **Create a Caretaker (Cuidador) with a Valid Email:**
+    *   Access the frontend application (e.g., `http://localhost:5173`).
+    *   Navigate to the "Caretakers" management section.
+    *   Create a new caretaker and **provide a valid email address** that you have access to (e.g., your personal email).
+
+3.  **Trigger an Email Notification:**
+    *   **Create an Animal:** Go to the "Animals" management section and create a new animal. When prompted, assign this animal to the caretaker you just created.
+    *   **Update an Animal:** Edit an existing animal and change its assigned caretaker to the one you created, or update other details of an animal already assigned to that caretaker.
+    *   **Delete an Animal:** Delete an animal that is currently assigned to the caretaker you created.
+
+4.  **Check Your Email:**
+    *   After performing one of the actions above, check the inbox of the email address you provided for the caretaker.
+    *   **Important:** The email might land in your **spam or junk folder**, so be sure to check there as well.
+
+## 📚 Documentation
+
+For more detailed information on each part of the system, refer to the dedicated documentation files:
+
+*   **[Backend Documentation](./backend/santuario/backend_documentation.md)**
+*   **[Frontend Documentation](./frontend/frontend_documentation.md)**

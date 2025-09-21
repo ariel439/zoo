@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AnimalDashboard, Cuidador, Veterinario, Habitat, PlanoAlimentar } from '../types/dashboard';
 
 interface AnimalFormPageProps {
@@ -9,13 +9,14 @@ interface AnimalFormPageProps {
   habitats: Habitat[];
   feedingPlans: PlanoAlimentar[];
   onNavigateBack: () => void;
-  onSave: (animalData: Partial<AnimalDashboard>) => void;
+  onSave: (animalData: Partial<AnimalDashboard>) => Promise<void>; // onSave now returns a Promise<void>
 }
 
-const FormField: React.FC<{ label: string, children: React.ReactNode }> = ({ label, children }) => (
+const FormField: React.FC<{ label: string, children: React.ReactNode, error?: string }> = ({ label, children, error }) => (
     <div>
         <label className="block text-sm font-medium text-light-cream/80 mb-2">{label}</label>
         {children}
+        {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
     </div>
 );
 
@@ -45,6 +46,18 @@ const AnimalFormPage: React.FC<AnimalFormPageProps> = ({
       status: 'Ativo',
       image: 'https://i.imgur.com/lFn440i.png', // Default image for new animals
   });
+  const [habitatError, setHabitatError] = useState<string | undefined>(undefined);
+  const [keeperError, setKeeperError] = useState<string | undefined>(undefined);
+
+  const habitatOccupancy = useMemo(() => {
+    const occupancy: { [key: number]: number } = {};
+    for (const animal of animals) {
+      if (animal.habitatId) {
+        occupancy[animal.habitatId] = (occupancy[animal.habitatId] || 0) + 1;
+      }
+    }
+    return occupancy;
+  }, [animals]);
 
   useEffect(() => {
     if (isEditing) {
@@ -58,7 +71,10 @@ const AnimalFormPage: React.FC<AnimalFormPageProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const isNumericField = ['age', 'keeperId', 'vetId', 'habitatId', 'feedingPlanId'].includes(name);
-    setFormData(prev => ({ ...prev, [name]: isNumericField ? parseInt(value) : value }));
+    setFormData(prev => ({ ...prev, [name]: isNumericField && value ? parseInt(value) : value }));
+    // Clear errors when user starts typing/changing input
+    if (name === 'habitatId') setHabitatError(undefined);
+    if (name === 'keeperId') setKeeperError(undefined);
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -110,25 +126,35 @@ const AnimalFormPage: React.FC<AnimalFormPageProps> = ({
                 {/* Right Column */}
                 <div className="space-y-6">
                     <FormField label="Habitat">
-                        <select name="habitatId" value={formData.habitatId} onChange={handleChange} className={inputStyles} required>
+                        <select name="habitatId" value={formData.habitatId || ''} onChange={handleChange} className={inputStyles} required>
                              <option value="">Selecione um habitat...</option>
-                             {habitats.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                             {habitats.map(h => {
+                                const occupancy = habitatOccupancy[h.id] || 0;
+                                const isFull = occupancy >= h.capacity;
+                                const isDisabled = isFull && h.id !== formData.habitatId;
+
+                                return (
+                                    <option key={h.id} value={h.id} disabled={isDisabled}>
+                                        {h.name} ({occupancy}/{h.capacity}) {isDisabled ? '(Lotado)' : ''}
+                                    </option>
+                                );
+                             })}
                         </select>
                     </FormField>
                      <FormField label="Cuidador">
-                        <select name="keeperId" value={formData.keeperId} onChange={handleChange} className={inputStyles} required>
+                        <select name="keeperId" value={formData.keeperId || ''} onChange={handleChange} className={inputStyles} required>
                             <option value="">Selecione um cuidador...</option>
                             {keepers.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
                         </select>
                     </FormField>
                      <FormField label="Veterinário">
-                        <select name="vetId" value={formData.vetId} onChange={handleChange} className={inputStyles} required>
+                        <select name="vetId" value={formData.vetId || ''} onChange={handleChange} className={inputStyles} required>
                             <option value="">Selecione um veterinário...</option>
                             {vets.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                         </select>
                     </FormField>
                     <FormField label="Plano Alimentar">
-                        <select name="feedingPlanId" value={formData.feedingPlanId} onChange={handleChange} className={inputStyles} required>
+                        <select name="feedingPlanId" value={formData.feedingPlanId || ''} onChange={handleChange} className={inputStyles} required>
                             <option value="">Selecione um plano...</option>
                             {feedingPlans.map(p => <option key={p.id} value={p.id}>{p.planName}</option>)}
                         </select>

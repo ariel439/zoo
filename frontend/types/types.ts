@@ -1,4 +1,3 @@
-
 export interface Slide {
   id: number;
   image: string;
@@ -20,4 +19,12 @@ export interface Animal {
   name: string;
   scientificName: string;
   description: string;
+}
+
+export interface BackendError {
+  timestamp: string;
+  status: number;
+  error: string;
+  message: string;
+  path: string;
 }
