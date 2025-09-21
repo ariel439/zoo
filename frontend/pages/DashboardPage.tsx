@@ -17,7 +17,7 @@ import HabitatDetailsPage from '../components/HabitatDetailsPage';
 import HabitatFormPage from '../components/HabitatFormPage';
 import FeedingPlanDetailsPage from '../components/FeedingPlanDetailsPage';
 import FeedingPlanFormPage from '../components/FeedingPlanFormPage';
-import ToastNotification from '../components/ToastNotification';
+
 import { AnimalDashboard, Cuidador, Veterinario, Habitat, PlanoAlimentar } from '../types/dashboard';
 import { 
     getAnimals, getCuidadores, getVeterinarios, getHabitats, getAlimentacoes, 
@@ -276,7 +276,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
                 setFeedingPlans(feedingPlansData);
             } catch (error) {
                 console.error("Failed to fetch initial data", error);
-                setToastMessage("Erro ao carregar os dados iniciais. Tente novamente mais tarde.");
+                showToast("Erro ao carregar os dados iniciais. Tente novamente mais tarde.", "error");
             }
         };
 
@@ -354,13 +354,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
             const itemName = savedItem.name || savedItem.planName;
             const friendlyTypeName = typeToNameMap[type] || 'Item';
 
-            setToastMessage(`${friendlyTypeName} "${itemName}" foi ${action} com sucesso.`);
+            showToast(`${friendlyTypeName} "${itemName}" foi ${action} com sucesso.`, "success");
             navigateBack();
 
         } catch (error: any) {
             console.error(`Failed to save ${type}`, error);
             const errorMessage = error.message || `Erro ao salvar o item. Tente novamente mais tarde.`;
-            setToastMessage(errorMessage);
+            showToast(errorMessage, "error", error instanceof ApiError ? error.backendError : undefined);
         }
     };
 
@@ -403,7 +403,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
             }
 
             const friendlyTypeName = typeToNameMap[type] || 'Item';
-            setToastMessage(`${friendlyTypeName} "${name}" foi excluído com sucesso.`);
+            showToast(`${friendlyTypeName} "${name}" foi excluído com sucesso.`, "success");
 
             // If the detailed view of the deleted item is open, navigate back
             const detailPageName = `${type}Details`;
@@ -413,7 +413,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
 
         } catch (error) {
             console.error(`Failed to delete ${type}`, error);
-            setToastMessage(`Erro ao excluir o item. Tente novamente mais tarde.`);
+            showToast(`Erro ao excluir o item. Tente novamente mais tarde.`, "error");
         }
 
         handleModalClose();
@@ -425,7 +425,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
             setAnimals(filteredAnimals);
         } catch (error) {
             console.error("Failed to filter animals", error);
-            setToastMessage("Erro ao filtrar animais. Tente novamente mais tarde.");
+            showToast("Erro ao filtrar animais. Tente novamente mais tarde.", "error");
         }
     };
 
@@ -435,7 +435,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
             setHabitats(filteredHabitats);
         } catch (error) {
             console.error("Failed to filter habitats", error);
-            setToastMessage("Erro ao filtrar habitats. Tente novamente mais tarde.");
+            showToast("Erro ao filtrar habitats. Tente novamente mais tarde.", "error");
         }
     };
 
@@ -449,7 +449,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
             setKeepers(filteredKeepers);
         } catch (error) {
             console.error("Failed to filter keepers", error);
-            setToastMessage("Erro ao filtrar cuidadores. Tente novamente mais tarde.");
+            showToast("Erro ao filtrar cuidadores. Tente novamente mais tarde.", "error");
         }
     };
 
@@ -463,7 +463,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
             setVets(filteredVets);
         } catch (error) {
             console.error("Failed to filter veterinários", error);
-            setToastMessage("Erro ao filtrar veterinários. Tente novamente mais tarde.");
+            showToast("Erro ao filtrar veterinários. Tente novamente mais tarde.", "error");
         }
     };
 
@@ -477,7 +477,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
             setFeedingPlans(filteredFeedingPlans);
         } catch (error) {
             console.error("Failed to filter planos de alimentação", error);
-            setToastMessage("Erro ao filtrar planos de alimentação. Tente novamente mais tarde.");
+            showToast("Erro ao filtrar planos de alimentação. Tente novamente mais tarde.", "error");
         }
     };
 
@@ -682,12 +682,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ setPage, showToast }) => 
                 message={`Você tem certeza que deseja excluir "${modalState.itemToDelete?.name || ''}"? Esta ação não pode ser desfeita.`}
             />
 
-            {toastMessage && (
-                <ToastNotification 
-                    message={toastMessage} 
-                    onClose={() => setToastMessage(null)} 
-                />
-            )}
+            
         </div>
     );
 };
