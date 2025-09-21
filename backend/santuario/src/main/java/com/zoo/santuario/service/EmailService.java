@@ -79,7 +79,7 @@ public class EmailService {
             </body>
             </html>
             """;
-        String finalBody = String.format(emailTemplate, body);
+        String finalBody = String.format(emailTemplate, body.replace("%", "%%"));
         content.put("value", finalBody);
         emailRequest.put("content", Collections.singletonList(content));
 
