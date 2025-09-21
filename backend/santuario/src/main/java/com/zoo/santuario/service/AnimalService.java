@@ -50,7 +50,7 @@ public class AnimalService {
                 logger.info("Cuidador found for keeperId: {}. Contact email: {}", savedAnimal.getKeeperId(), cuidador.getContact());
                 String subject = "Novo Animal Atribuído: " + savedAnimal.getName();
                 String body = String.format("Prezado(a) %s,<br><br>Um novo animal, <b>%s</b> (Espécie: %s), foi atribuído a você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                        cuidador.getName(), savedAnimal.getName(), savedAnimal.getSpecies());
+                        cuidador.getName().replace("%", "%%"), savedAnimal.getName().replace("%", "%%"), savedAnimal.getSpecies().replace("%", "%%"));
                 emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
             });
         } else {
@@ -93,7 +93,7 @@ public class AnimalService {
                                 logger.info("Cuidador found for new keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
                                 String subject = "Atribuição de Animal Atualizada: " + updatedAnimal.getName();
                                 String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi atribuído a você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                                        cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
+                                        cuidador.getName().replace("%", "%%"), updatedAnimal.getName().replace("%", "%%"), updatedAnimal.getSpecies().replace("%", "%%"));
                                 emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
                             });
                         } else if (updatedAnimal.getKeeperId() != null && updatedAnimal.getKeeperId().equals(oldKeeperId)) {
@@ -103,7 +103,7 @@ public class AnimalService {
                                 logger.info("Cuidador found for keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
                                 String subject = "Detalhes do Animal Atualizados: " + updatedAnimal.getName();
                                 String body = String.format("Prezado(a) %s,<br><br>Os detalhes do animal <b>%s</b> (Espécie: %s), atribuído a você, foram atualizados.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                                        cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
+                                        cuidador.getName().replace("%", "%%"), updatedAnimal.getName().replace("%", "%%"), updatedAnimal.getSpecies().replace("%", "%%"));
                                 emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
                             });
                         } else if (updatedAnimal.getKeeperId() == null && oldKeeperId != null) {
@@ -117,7 +117,7 @@ public class AnimalService {
                                 logger.info("Cuidador found for old keeperId: {}. Contact email: {}", oldKeeperId, cuidador.getContact());
                                 String subject = "Animal Desatribuído: " + updatedAnimal.getName();
                                 String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi desatribuído de você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                                        cuidador.getName(), updatedAnimal.getName(), updatedAnimal.getSpecies());
+                                        cuidador.getName().replace("%", "%%"), updatedAnimal.getName().replace("%", "%%"), updatedAnimal.getSpecies().replace("%", "%%"));
                                 emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
                             });
                         }
@@ -145,7 +145,7 @@ public class AnimalService {
                     logger.info("Cuidador found for keeperId: {}. Contact email: {}", animalToDelete.getKeeperId(), cuidador.getContact());
                     String subject = "Animal Removido: " + animalToDelete.getName();
                     String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s), que estava atribuído a você, foi removido do sistema.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                            cuidador.getName(), animalToDelete.getName(), animalToDelete.getSpecies());
+                            cuidador.getName().replace("%", "%%"), animalToDelete.getName().replace("%", "%%"), animalToDelete.getSpecies().replace("%", "%%"));
                     emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
                 });
             } else {
