@@ -24,6 +24,7 @@ const KeeperFormPage: React.FC<KeeperFormPageProps> = ({ keeperId, keepers, onNa
       specialty: '',
       contact: '',
       status: 'Ativo',
+      workShift: 'Manhã', // Initialize workShift
   });
 
   useEffect(() => {
