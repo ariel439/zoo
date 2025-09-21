@@ -69,7 +69,7 @@ public class AnimalControllerIntegrationTest {
 
         // Create a caretaker first
         CuidadorRequestDTO cuidadorRequestDTO = new CuidadorRequestDTO(
-                "John Doe", "john.doe@example.com", "Mammals", "Active"
+                "John Doe", "john.doe@example.com", "Mammals", "Active", "Manhã"
         );
 
         String responseString = mockMvc.perform(post("/api/cuidadores")
