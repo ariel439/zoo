@@ -1,224 +1,145 @@
-# 🐾 Zoo Management System 🌿
 
-## ✨ Project Overview
+# 🦁 API Zoo
 
-Welcome to the **Zoo Management System**! This project implements a **RESTful API** designed to manage comprehensive information for a modern zoo. It allows for the creation, reading, updating, and deletion of data across several key entities, along with advanced filtering capabilities and essential business rules. The system also includes a public-facing website for visitors and a robust administrative panel for staff, built with Spring Boot for the backend and React with TypeScript for the frontend.
+API REST desenvolvida em **Spring Boot** para gerenciar um zoológico. O sistema permite o cadastro e gerenciamento de **animais**, **cuidadores**, **veterinários** e **alimentações**.
 
-🔗 **Live Demo:** [https://zoo-front-production.up.railway.app/](https://zoo-front-production.up.railway.app/)
+## 🚀 Tecnologias utilizadas
 
-## 🚀 Features
+- **Java 17+**
+- **Spring Boot** (Web, Data JPA)
+- **Hibernate / JPA**
+- **Lombok**
+- Banco de Dados Relacional (MySQL ou PostgreSQL)
 
-This system provides a comprehensive RESTful API to manage zoo operations, fulfilling the following core requirements:
+## 📂 Estrutura do projeto
 
-### 🐘 Entities & CRUD Operations
-
-The API manages the following 5 core entities, each supporting full **CRUD (Create, Read, Update, Delete)** operations:
-
-1.  **Animal:**
-    *   Attributes: `id`, `nome`, `espécie`, `idade`, `habitat` (reference to Habitat), `cuidador responsável` (reference to Cuidador).
-    *   Operations: Create, List, Update, Delete animals.
-2.  **Habitat:**
-    *   Attributes: `id`, `nome` (e.g., Savana, Floresta, Aquário, Terrário), `tipo` (e.g., terrestre, aquático, aéreo), `capacidade máxima de animais`.
-    *   Operations: Create, List, Update, Delete habitats.
-3.  **Cuidador (Caretaker):**
-    *   Attributes: `id`, `nome`, `especialidade` (e.g., mamíferos, répteis, aves), `turno de trabalho`.
-    *   Operations: Create, List, Update, Delete caretakers.
-4.  **Veterinário (Veterinarian):**
-    *   Attributes: `id`, `nome`, `CRMV`, `especialidade` (e.g., felinos, aves exóticas).
-    *   Operations: Create, List, Update, Delete veterinarians.
-5.  **Alimentação (Feeding Plan):**
-    *   Attributes: `id`, `tipo de comida` (e.g., carne, frutas, ração especial), `quantidade diária`, `animal` (reference to Animal).
-    *   Operations: Create, List, Update, Delete feeding plans.
-
-### 🔍 Query Endpoints with Filters
-
-The API provides specific endpoints for querying information with filters:
-
-*   **Animal:**
-    *   Search by `espécie` (e.g., `GET /animais?especie=Leão`).
-    *   Search by `idade mínima/máxima` (e.g., `GET /animais?idadeMin=5&idadeMax=10`).
-    *   Search by `nome parcial`.
-*   **Habitat:**
-    *   Search by `tipo` (e.g., `GET /habitats?tipo=terrestre`).
-*   **Cuidador:**
-    *   Search by `especialidade`.
-    *   Search by `turno de trabalho`.
-*   **Veterinário:**
-    *   Search by `especialidade`.
-*   **Alimentação:**
-    *   Search by `tipo de comida`.
-    *   Search by `animal` (by `animalId`, e.g., `GET /alimentacoes?animalId=3`).
-
-### 📧 Email Notification Feature
-
-The system includes an automated email notification feature for caretakers (cuidadores) when animals are assigned, updated, or deleted, ensuring timely communication regarding their responsibilities.
-
-### 🌐 Frontend (User & Admin Interface)
-
-*   **Public Site:**
-    *   🖼️ Dynamic Home Page with Hero Carousel.
-    *   🦁 Animal Gallery showcasing detailed information about residents.
-    *   🗺️ Visit Information (map, opening hours) and Contact Form.
-*   **Management Dashboard (Admin Panel):**
-    *   📊 Overview Dashboard with statistics and alerts.
-    *   Intuitive Navigation with tabs and breadcrumbs.
-    *   Reusable components for consistent UX (modals, notifications).
-
-## ⚖️ Business Rules
-
-The system enforces the following mandatory business rules:
-
-*   **Habitat Capacity:** A habitat cannot exceed its maximum capacity of animals.
-*   **Caretaker Association:** Each animal must have at least one caretaker associated.
-
-## 🛠️ Technologies Used
-
-### Frontend
-
-*   **React:** Building dynamic and interactive user interfaces.
-*   **TypeScript:** Enhanced code quality, readability, and maintainability.
-*   **Vite:** Lightning-fast development experience and optimized builds.
-*   **HTML/CSS:** Standard web technologies for structure and styling.
-*   **Axios:** Promise-based HTTP client for API communication.
-
-### Backend
-
-*   **Spring Boot:** Rapid development of robust, stand-alone applications.
-*   **Maven:** Dependency management and build automation.
-*   **MySQL:** Reliable relational database for data persistence.
-*   **Spring Data JPA:** Simplified data access layer.
-*   **Lombok:** Reduced boilerplate code.
-*   **SendGrid:** Email service for notifications.
-*   **SpringDoc OpenAPI:** Automated API documentation.
-*   **Testcontainers:** For integration testing with real services (e.g., MySQL).
-
-## 🏗️ Architecture
-
-The system follows a client-server architecture:
-
-*   **Frontend:** A React application that consumes RESTful APIs provided by the backend.
-*   **Backend:** A Spring Boot application that exposes RESTful APIs, handles business logic, interacts with the MySQL database, and sends email notifications.
-*   **Database:** MySQL for persistent storage of all zoo-related data.
-
-```mermaid
-graph TD
-    A[User/Admin Browser] -->|HTTP/HTTPS| B(Frontend - React/TypeScript)
-    B -->|REST API Calls| C(Backend - Spring Boot)
-    C -->|JPA/JDBC| D[Database - MySQL]
-    C -->|Email Notifications| E[SendGrid]
 ```
 
-## 🚀 Getting Started (Local Development)
+com.example.Zoo
+├── Controller    → Camada de controle (endpoints REST)
+├── DTO           → Objetos de transferência de dados
+├── Models        → Entidades do domínio
+└── Service       → Regras de negócio
 
-To set up and run the project locally, follow these steps:
+````
 
-### Prerequisites
+## 📌 Endpoints principais
 
-*   Java 17 or higher
-*   Node.js (LTS version) & npm/yarn
-*   Maven
-*   MySQL Server
-*   Git
+### 🐾 **Animais** (`/animais`)
 
-### 1. Clone the Repository
+| Método | Rota                        | Descrição                        |
+|--------|-----------------------------|----------------------------------|
+| `GET`  | `/animais`                  | Lista todos os animais.         |
+| `GET`  | `/animais/{id}`             | Busca um animal pelo ID.        |
+| `GET`  | `/animais/especie/{especie}`| Busca animais por espécie.      |
+| `GET`  | `/animais/idade?idadeMin=&idadeMax=` | Busca animais por faixa etária. |
+| `POST` | `/animais`                  | Cria um novo animal.            |
+| `PUT`  | `/animais/{id}`             | Atualiza um animal existente.   |
+| `DELETE`| `/animais/{id}`            | Remove um animal.               |
 
-```bash
-git clone <repository-url>
-cd zoo
+### 🍖 **Alimentações** (`/alimentacoes`)
+
+| Método | Rota                         | Descrição                          |
+|--------|------------------------------|------------------------------------|
+| `GET`  | `/alimentacoes`              | Lista todas as alimentações.      |
+| `GET`  | `/alimentacoes/{id}`         | Busca uma alimentação pelo ID.    |
+| `POST` | `/alimentacoes`              | Registra uma nova alimentação.    |
+| `PUT`  | `/alimentacoes/{id}`         | Atualiza uma alimentação.         |
+| `DELETE`| `/alimentacoes/{id}`        | Remove uma alimentação.           |
+
+### 👨‍🌾 **Cuidadores** (`/cuidadores`)
+
+| Método | Rota                              | Descrição                                 |
+|--------|-----------------------------------|-------------------------------------------|
+| `GET`  | `/cuidadores`                     | Lista todos os cuidadores.               |
+| `GET`  | `/cuidadores/{id}`                | Busca um cuidador pelo ID.               |
+| `GET`  | `/cuidadores/filter?especialidade=&turno=` | Filtra cuidadores por especialidade ou turno. |
+| `POST` | `/cuidadores`                     | Cadastra um novo cuidador.               |
+| `PUT`  | `/cuidadores/{id}`                | Atualiza um cuidador.                    |
+| `DELETE`| `/cuidadores/{id}`               | Remove um cuidador.                      |
+
+### 🩺 **Veterinários** (`/veterinarios`)
+
+| Método | Rota                         | Descrição                          |
+|--------|------------------------------|------------------------------------|
+| `GET`  | `/veterinarios`              | Lista todos os veterinários.      |
+| `GET`  | `/veterinarios/{id}`         | Busca um veterinário pelo ID.    |
+| `POST` | `/veterinarios`              | Cadastra um novo veterinário.    |
+| `PUT`  | `/veterinarios/{id}`         | Atualiza um veterinário.         |
+| `DELETE`| `/veterinarios/{id}`        | Remove um veterinário.           |
+
+## 📖 Exemplos de requisição
+
+### Criar Animal (`POST /animais`)
+
+```json
+{
+  "nome": "Leão Simba",
+  "especie": "Leão",
+  "idade": 5,
+  "habitatId": 1
+}
+````
+
+### Criar Cuidador (`POST /cuidadores`)
+
+```json
+{
+  "nome": "Carlos Silva",
+  "especialidade": "Mamíferos",
+  "turnoDeTrabalho": "Manhã"
+}
 ```
 
-### 2. Backend Setup
+## ▶️ Como rodar o projeto
 
-Navigate to the backend directory:
+1. Clone o repositório:
 
-```bash
-cd backend/santuario
+   ```bash
+   git clone https://github.com/seu-usuario/APIZoo.git
+   ```
+
+2. Acesse a pasta do projeto:
+
+   ```bash
+   cd APIZoo
+   ```
+
+3. Configure o banco de dados em `application.properties`:
+
+   ```properties
+   spring.datasource.url=jdbc:mysql://localhost:3306/zoo
+   spring.datasource.username=root
+   spring.datasource.password=senha
+   spring.jpa.hibernate.ddl-auto=update
+   ```
+
+4. Rode a aplicação:
+
+   ```bash
+   mvn spring-boot:run
+   ```
+
+5. Acesse a API em: [http://localhost:8080](http://localhost:8080)
+
+## 📌 Melhorias futuras
+
+* Implementar autenticação e autorização (Spring Security + JWT).
+* Adicionar documentação com Swagger/OpenAPI.
+* Criar testes unitários e de integração.
+
+## 📌 Autor
+
+Projeto acadêmico inspirado em sistemas de gestão de zoológicos.
+
 ```
 
-*   **Database Configuration:**
-    *   Create a MySQL database (e.g., `zoo_db`).
-    *   Update `src/main/resources/application.properties` with your MySQL connection details (username, password, database name).
-    *   Ensure `spring.jpa.hibernate.ddl-auto` is set to `update` or `create` for initial schema generation (change to `validate` or `none` for production).
-*   **Email Service Configuration:**
-    *   Obtain a SendGrid API Key.
-    *   Set `SENDGRID_API_KEY` and `SENDGRID_FROM_EMAIL` in your environment variables or `application.properties`.
-*   **Build and Run:**
+### O que eu fiz para melhorar?
 
-```bash
-mvn clean install
-mvn spring-boot:run
+1. **Cabeçalhos e formatação:** Organizei melhor os títulos e subtítulos com cabeçalhos (`##`, `###`), o que facilita a leitura e navegação.
+2. **Tabelas:** Coloquei os detalhes dos endpoints dentro de tabelas, para que fiquem bem alinhados e fáceis de entender.
+3. **Exemplos de JSON:** Os exemplos de requisição estão formatados corretamente em bloco de código.
+4. **Espaçamento e alinhamento:** Ajustei o espaçamento para garantir que as seções não fiquem sobrecarregadas visualmente.
+
+Agora, esse `README.md` deve ficar bem legível e organizado no GitHub. Se precisar de mais ajustes ou ajuda em outra parte do projeto, é só avisar!
 ```
-
-The backend API will be accessible at `http://localhost:8080` (or your configured port).
-
-### 3. Frontend Setup
-
-Navigate to the frontend directory:
-
-```bash
-cd ../../frontend
-```
-
-*   **Install Dependencies:**
-
-```bash
-npm install
-# or yarn install
-```
-
-*   **Run the Development Server:**
-
-```bash
-npm run dev
-# or yarn dev
-```
-
-The frontend application will be accessible at `http://localhost:5173` (or your configured Vite port).
-
-### 4. Running Tests
-
-To run the backend integration and unit tests:
-
-*   **Prerequisite:** Ensure **Docker is running** on your machine, as integration tests use Testcontainers to spin up a real MySQL database.
-*   Navigate to the backend directory:
-
-```bash
-cd backend/santuario
-```
-
-*   **Execute Tests:**
-
-```bash
-./mvnw test
-```
-(On Windows, use `mvnw.cmd test`)
-
-*   **Interpreting Results:** Look for `[INFO] BUILD SUCCESS` at the end of the output. If `[INFO] BUILD FAILURE` occurs, check the `Failures` and `Errors` counts in the test summary for details.
-
-## 📧 Email Notification Walkthrough
-
-This system includes an email notification feature for caretakers (cuidadores) when animals are assigned, updated, or deleted. Follow these steps to test it:
-
-1.  **Ensure Backend Email Configuration:**
-    *   Make sure your backend is configured with a valid SendGrid API Key and `SENDGRID_FROM_EMAIL` as described in the "Backend Setup" section.
-
-2.  **Create a Caretaker (Cuidador) with a Valid Email:**
-    *   Access the frontend application (e.g., `http://localhost:5173`).
-    *   Navigate to the "Caretakers" management section.
-    *   Create a new caretaker and **provide a valid email address** that you have access to (e.g., your personal email).
-
-3.  **Trigger an Email Notification:**
-    *   **Create an Animal:** Go to the "Animals" management section and create a new animal. When prompted, assign this animal to the caretaker you just created.
-    *   **Update an Animal:** Edit an existing animal and change its assigned caretaker to the one you created, or update other details of an animal already assigned to that caretaker.
-    *   **Delete an Animal:** Delete an animal that is currently assigned to the caretaker you created.
-
-4.  **Check Your Email:**
-    *   After performing one of the actions above, check the inbox of the email address you provided for the caretaker.
-    *   **Important:** The email might land in your **spam or junk folder**, so be sure to check there as well.
-
-## 📚 Documentation
-
-For more detailed information on each part of the system, refer to the dedicated documentation files:
-
-*   **[Backend Documentation](./backend/santuario/backend_documentation.md)**
-*   **[Frontend Documentation](./frontend/frontend_documentation.md)**
