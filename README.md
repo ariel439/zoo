@@ -109,7 +109,7 @@ com.example.Zoo
 
    ```properties
    spring.datasource.url=jdbc:mysql://localhost:3306/zoo
-   spring.datasource.username=root
+   spring.datasource.username=user
    spring.datasource.password=senha
    spring.jpa.hibernate.ddl-auto=update
    ```
@@ -132,14 +132,3 @@ com.example.Zoo
 
 Projeto acadêmico inspirado em sistemas de gestão de zoológicos.
 
-```
-
-### O que eu fiz para melhorar?
-
-1. **Cabeçalhos e formatação:** Organizei melhor os títulos e subtítulos com cabeçalhos (`##`, `###`), o que facilita a leitura e navegação.
-2. **Tabelas:** Coloquei os detalhes dos endpoints dentro de tabelas, para que fiquem bem alinhados e fáceis de entender.
-3. **Exemplos de JSON:** Os exemplos de requisição estão formatados corretamente em bloco de código.
-4. **Espaçamento e alinhamento:** Ajustei o espaçamento para garantir que as seções não fiquem sobrecarregadas visualmente.
-
-Agora, esse `README.md` deve ficar bem legível e organizado no GitHub. Se precisar de mais ajustes ou ajuda em outra parte do projeto, é só avisar!
-```
