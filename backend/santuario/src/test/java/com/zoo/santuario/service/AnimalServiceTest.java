@@ -55,7 +55,7 @@ class AnimalServiceTest {
         animal.setName("Simba");
 
         when(habitatRepository.findById(1L)).thenReturn(Optional.of(habitat));
-        when(animalRepository.countByHabitatId(1L)).thenReturn(5L);
+        when(animalRepository.countByHabitat_Id(1L)).thenReturn(5L);
         when(animalRepository.save(any(Animal.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
