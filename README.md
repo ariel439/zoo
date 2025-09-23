@@ -1,9 +1,9 @@
 
-# 🦁 API Zoo
+# API Zoo
 
 API REST desenvolvida em **Spring Boot** para gerenciar um zoológico. O sistema permite o cadastro e gerenciamento de **animais**, **cuidadores**, **veterinários** e **alimentações**.
 
-## 🚀 Tecnologias utilizadas
+## Tecnologias utilizadas
 
 - **Java 17+**
 - **Spring Boot** (Web, Data JPA)
@@ -11,7 +11,7 @@ API REST desenvolvida em **Spring Boot** para gerenciar um zoológico. O sistema
 - **Lombok**
 - Banco de Dados Relacional (MySQL ou PostgreSQL)
 
-## 📂 Estrutura do projeto
+## Estrutura do projeto
 
 ```
 
@@ -23,7 +23,7 @@ com.example.Zoo
 
 ````
 
-## 📌 Endpoints principais
+## Endpoints principais
 
 ### 🐾 **Animais** (`/animais`)
 
@@ -68,7 +68,7 @@ com.example.Zoo
 | `PUT`  | `/veterinarios/{id}`         | Atualiza um veterinário.         |
 | `DELETE`| `/veterinarios/{id}`        | Remove um veterinário.           |
 
-## 📖 Exemplos de requisição
+## Exemplos de requisição
 
 ### Criar Animal (`POST /animais`)
 
@@ -91,7 +91,7 @@ com.example.Zoo
 }
 ```
 
-## ▶️ Como rodar o projeto
+## Como rodar o projeto
 
 1. Clone o repositório:
 
