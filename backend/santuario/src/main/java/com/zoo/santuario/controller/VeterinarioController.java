@@ -44,11 +44,10 @@ public class VeterinarioController {
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    // CHANGED: This now relies on the GlobalExceptionHandler to manage errors.
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVeterinario(@PathVariable Long id) {
-        if (veterinarioService.deleteVeterinario(id)) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        veterinarioService.deleteVeterinario(id);
+        return ResponseEntity.noContent().build();
     }
 }

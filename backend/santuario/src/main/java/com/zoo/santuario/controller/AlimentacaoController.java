@@ -2,6 +2,7 @@ package com.zoo.santuario.controller;
 
 import com.zoo.santuario.dto.AlimentacaoRequestDTO;
 import com.zoo.santuario.dto.AlimentacaoResponseDTO;
+import com.zoo.santuario.exception.ResourceNotFoundException;
 import com.zoo.santuario.service.AlimentacaoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -45,11 +46,19 @@ public class AlimentacaoController {
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    // CHANGED: This method now uses a try/catch block to handle service-layer exceptions.
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAlimentacao(@PathVariable Long id) {
-        if (alimentacaoService.deleteAlimentacao(id)) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        try {
+            alimentacaoService.deleteAlimentacao(id);
+            // On success, return 204 No Content
+            return ResponseEntity.noContent().build(); 
+        } catch (ResourceNotFoundException e) {
+            // If the service can't find the resource, return 404 Not Found
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            // If the service says it's in use, return 409 Conflict
+            return ResponseEntity.status(HttpStatus.CONFLICT).build(); 
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }
