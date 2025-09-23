@@ -8,13 +8,9 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AlimentacaoResponseDTO {
-
     private Long id;
     private String planName;
-    private String animalSpecies;
     private String foodType;
     private String quantity;
     private String frequency;
-    private Long animalId;
-
 }

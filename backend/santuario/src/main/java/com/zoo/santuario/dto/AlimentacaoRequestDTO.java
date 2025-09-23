@@ -9,17 +9,12 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AlimentacaoRequestDTO {
-
     @NotBlank
     private String planName;
-    @NotBlank
-    private String animalSpecies;
     @NotBlank
     private String foodType;
     @NotBlank
     private String quantity;
     @NotBlank
     private String frequency;
-    private Long animalId;
-
 }
