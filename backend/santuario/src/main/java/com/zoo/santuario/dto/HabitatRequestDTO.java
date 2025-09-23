@@ -1,6 +1,6 @@
 package com.zoo.santuario.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -10,12 +10,12 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class HabitatRequestDTO {
 
-    @NotNull
+    @NotBlank
     private String name;
-    @NotNull
+    @NotBlank
     private String type;
     private int capacity;
-    @NotNull
+    @NotBlank
     private String status;
 
 }

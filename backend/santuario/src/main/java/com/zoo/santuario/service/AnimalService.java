@@ -22,6 +22,30 @@ import com.zoo.santuario.exception.HabitatCapacityExceededException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * This service class acts as the brain for all operations involving animals. 
+ * It contains the core business logic, validation rules, and coordinates actions 
+ * like database changes and sending email notifications.
+ *
+ * --- How It Works ---
+ *
+ * 1.  API Layer Interaction: The `AnimalController` receives requests and calls the public methods here 
+ * (e.g., `createAnimal`, `updateAnimal`). These methods manage the entire workflow.
+ *
+ * 2.  Business Rule Validation:  Before making changes, it enforces key rules using private helper methods. For example, 
+ * `validateHabitatCapacity` checks if a habitat is full, and other checks ensure an 
+ * animal always has a keeper assigned.
+ *
+ * 3.  Database Operations: It uses the `AnimalRepository` with JPA to save, update, delete, and find animal data in the database.
+ *
+ * 4.  Email Notification Workflow:
+ * This is a key feature. After a successful database change (create, update, or delete), 
+ * the service triggers a notification.
+ * - The main method calls a specific helper `handleUpdateNotifications`.
+ * - It analyzes the situation, decides who needs an email (the new keeper, the old keeper, or both), and determines what message they should get.
+ * - It then calls the generic `sendKeeperNotification` method, providing the correct email template.
+ * - Finally, `sendKeeperNotification` finds the keeper's contact info and tells the external `EmailService` to send the actual email.
+ */
 @Service
 public class AnimalService {
 
@@ -37,6 +61,14 @@ public class AnimalService {
     @Autowired
     private HabitatRepository habitatRepository;
 
+    // Email templates for sending notifications
+    private static final String EMAIL_GREETING = "Prezado(a) %s,<br><br>";
+    private static final String EMAIL_SIGN_OFF = "<br><br>Atenciosamente,<br>Gerência do Zoológico";
+    private static final String NEW_ASSIGNMENT_BODY = EMAIL_GREETING + "Um novo animal, <b>%s</b> (Espécie: %s), foi atribuído a você." + EMAIL_SIGN_OFF;
+    private static final String UPDATE_DETAILS_BODY = EMAIL_GREETING + "Os detalhes do animal <b>%s</b> (Espécie: %s), atribuído a você, foram atualizados." + EMAIL_SIGN_OFF;
+    private static final String UNASSIGNMENT_BODY = EMAIL_GREETING + "O animal <b>%s</b> (Espécie: %s) foi desatribuído de você." + EMAIL_SIGN_OFF;
+    private static final String DELETED_BODY = EMAIL_GREETING + "O animal <b>%s</b> (Espécie: %s), que estava atribuído a você, foi removido do sistema." + EMAIL_SIGN_OFF;
+
     public List<AnimalResponseDTO> getAllAnimals() {
         logger.debug("Fetching all animals");
         List<AnimalResponseDTO> animals = animalRepository.findAll().stream()
@@ -46,6 +78,8 @@ public class AnimalService {
         return animals;
     }
 
+    //This code uses a criteriaBuilder to create individual filter rules, called Predicates, and adds them to a list only for the search terms that aren't empty
+    //Finally, it combines all the rules in the list with AND to build a safe, dynamic database query.
     public List<AnimalResponseDTO> getFilteredAnimals(String species, Integer ageMin, Integer ageMax, String name) {
         logger.debug("Fetching filtered animals with species: {}, ageMin: {}, ageMax: {}, name: {}", species, ageMin, ageMax, name);
         Specification<Animal> spec = (root, query, criteriaBuilder) -> {
@@ -53,19 +87,15 @@ public class AnimalService {
 
             if (species != null && !species.isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("species"), species));
-                logger.debug("Adding species filter: {}", species);
             }
             if (ageMin != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("age"), ageMin));
-                logger.debug("Adding ageMin filter: {}", ageMin);
             }
             if (ageMax != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("age"), ageMax));
-                logger.debug("Adding ageMax filter: {}", ageMax);
             }
             if (name != null && !name.isEmpty()) {
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
-                logger.debug("Adding name filter: {}", name);
             }
 
             return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
@@ -90,82 +120,39 @@ public class AnimalService {
 
     public AnimalResponseDTO createAnimal(AnimalRequestDTO animalRequestDTO) {
         logger.info("Attempting to create new animal: {}", animalRequestDTO.getName());
-        // Business Rule 1: Each animal must have at least one caretaker associated.
         if (animalRequestDTO.getKeeperId() == null) {
             logger.warn("Caretaker required for new animal: {}", animalRequestDTO.getName());
             throw new CaretakerRequiredException("Animal must have a caretaker associated.");
         }
 
-        // Business Rule 2: A habitat cannot exceed its maximum capacity of animals.
-        if (animalRequestDTO.getHabitatId() != null) {
-            Habitat habitat = habitatRepository.findById(animalRequestDTO.getHabitatId())
-                    .orElseThrow(() -> {
-                        logger.warn("Habitat not found with ID: {} for new animal: {}", animalRequestDTO.getHabitatId(), animalRequestDTO.getName());
-                        return new ResourceNotFoundException("Habitat not found with ID: " + animalRequestDTO.getHabitatId());
-                    });
-
-            long currentAnimalsInHabitat = animalRepository.countByHabitatId(animalRequestDTO.getHabitatId());
-            if (currentAnimalsInHabitat >= habitat.getCapacity()) {
-                logger.warn("Habitat capacity exceeded for habitat ID: {} (current: {}, capacity: {}) for new animal: {}", habitat.getId(), currentAnimalsInHabitat, habitat.getCapacity(), animalRequestDTO.getName());
-                throw new HabitatCapacityExceededException("Habitat " + habitat.getName() + " (ID: " + habitat.getId() + ") has reached its maximum capacity.");
-            }
-            logger.debug("Habitat capacity check passed for habitat ID: {}", habitat.getId());
-        }
+        validateHabitatCapacity(animalRequestDTO.getHabitatId(), null);
 
         Animal animal = convertToEntity(animalRequestDTO);
         Animal savedAnimal = animalRepository.save(animal);
         logger.info("Animal created successfully with ID: {}", savedAnimal.getId());
 
-        // Send email notification if keeperId is present
-        if (savedAnimal.getKeeperId() != null) {
-            logger.info("Attempting to send email for new animal: {}", savedAnimal.getName());
-            cuidadorRepository.findById(savedAnimal.getKeeperId()).ifPresent(cuidador -> {
-                logger.info("Cuidador found for keeperId: {}. Contact email: {}", savedAnimal.getKeeperId(), cuidador.getContact());
-                String subject = "Novo Animal Atribuído: " + savedAnimal.getName();
-                String body = String.format("Prezado(a) %s,<br><br>Um novo animal, <b>%s</b> (Espécie: %s), foi atribuído a você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                        cuidador.getName().replace("%", "%%"), savedAnimal.getName().replace("%", "%%"), savedAnimal.getSpecies().replace("%", "%%"));
-                emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
-                logger.info("Email notification sent for new animal {} to keeper {}", savedAnimal.getName(), cuidador.getName());
-            });
-        } else {
-            logger.info("No keeperId present for new animal: {}. Skipping email notification.", savedAnimal.getName());
-        }
+        String subject = "Novo Animal Atribuído: " + savedAnimal.getName();
+        sendKeeperNotification(savedAnimal.getKeeperId(), savedAnimal, subject, NEW_ASSIGNMENT_BODY);
 
         return convertToDto(savedAnimal);
     }
 
-    public AnimalResponseDTO updateAnimal(Long id, AnimalRequestDTO animalRequestDTO) {
+     public AnimalResponseDTO updateAnimal(Long id, AnimalRequestDTO animalRequestDTO) {
         logger.info("Attempting to update animal with ID: {}", id);
         return animalRepository.findById(id)
                 .map(existingAnimal -> {
                     logger.debug("Animal with ID {} found for update.", id);
-                    // Business Rule 1: Each animal must have at least one caretaker associated.
+                    
                     if (animalRequestDTO.getKeeperId() == null) {
                         logger.warn("Caretaker required for animal update with ID: {}", id);
                         throw new CaretakerRequiredException("Animal must have a caretaker associated.");
                     }
 
-                    // Business Rule 2: A habitat cannot exceed its maximum capacity of animals.
-                    // Only check if habitat is changing or if it's a new assignment
-                    if (animalRequestDTO.getHabitatId() != null && !animalRequestDTO.getHabitatId().equals(existingAnimal.getHabitatId())) {
-                        logger.debug("Habitat change detected for animal ID: {}. Old habitat ID: {}, New habitat ID: {}", id, existingAnimal.getHabitatId(), animalRequestDTO.getHabitatId());
-                        Habitat newHabitat = habitatRepository.findById(animalRequestDTO.getHabitatId())
-                                .orElseThrow(() -> {
-                                    logger.warn("New habitat not found with ID: {} for animal update with ID: {}", animalRequestDTO.getHabitatId(), id);
-                                    return new ResourceNotFoundException("Habitat not found with ID: " + animalRequestDTO.getHabitatId());
-                                });
-
-                        long currentAnimalsInNewHabitat = animalRepository.countByHabitatId(animalRequestDTO.getHabitatId());
-                        if (currentAnimalsInNewHabitat >= newHabitat.getCapacity()) {
-                            logger.warn("Habitat capacity exceeded for new habitat ID: {} (current: {}, capacity: {}) for animal ID: {}", newHabitat.getId(), currentAnimalsInNewHabitat, newHabitat.getCapacity(), id);
-                            throw new HabitatCapacityExceededException("Habitat " + newHabitat.getName() + " (ID: " + newHabitat.getId() + ") has reached its maximum capacity.");
-                        }
-                        logger.debug("New habitat capacity check passed for habitat ID: {}", newHabitat.getId());
-                    }
-
-                    // Store old keeperId to check if it changed
                     Long oldKeeperId = existingAnimal.getKeeperId();
+                    
+                    validateHabitatCapacity(animalRequestDTO.getHabitatId(), existingAnimal.getHabitatId());
 
+                    // CORRECTED: Using the correct 'animalRequestDTO' variable instead of 'dto'
                     existingAnimal.setName(animalRequestDTO.getName());
                     existingAnimal.setSpecies(animalRequestDTO.getSpecies());
                     existingAnimal.setAge(animalRequestDTO.getAge());
@@ -177,61 +164,12 @@ public class AnimalService {
                     existingAnimal.setVetId(animalRequestDTO.getVetId());
                     existingAnimal.setHabitatId(animalRequestDTO.getHabitatId());
                     existingAnimal.setFeedingPlanId(animalRequestDTO.getFeedingPlanId());
-                    Animal updatedAnimal;
-                    try {
-                        updatedAnimal = animalRepository.save(existingAnimal);
-                        logger.info("Animal with ID {} updated successfully.", updatedAnimal.getId());
-                    } catch (Exception e) {
-                        logger.error("Error saving animal with ID {}: {}", id, e.getMessage(), e);
-                        throw new RuntimeException("Failed to save animal: " + e.getMessage(), e);
-                    }
+                    
+                    Animal updatedAnimal = animalRepository.save(existingAnimal);
+                    logger.info("Animal with ID {} updated successfully.", updatedAnimal.getId());
 
-                    // Send email notification if keeperId changed or is newly assigned
-                    try {
-                        if (updatedAnimal.getKeeperId() != null && !updatedAnimal.getKeeperId().equals(oldKeeperId)) {
-                            logger.info("Attempting to send email for updated animal (new keeper): {}", updatedAnimal.getName());
-                            cuidadorRepository.findById(updatedAnimal.getKeeperId()).ifPresent(cuidador -> {
-                                logger.info("Cuidador found for new keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
-                                String subject = "Atribuição de Animal Atualizada: " + updatedAnimal.getName();
-                                String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi atribuído a você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                                        cuidador.getName().replace("%", "%%"), updatedAnimal.getName().replace("%", "%%"), updatedAnimal.getSpecies().replace("%", "%%"));
-                                emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
-                                logger.info("Email notification sent for updated animal {} to new keeper {}", updatedAnimal.getName(), cuidador.getName());
-                            });
-                        } else if (updatedAnimal.getKeeperId() != null && updatedAnimal.getKeeperId().equals(oldKeeperId)) {
-                            // If keeperId is the same but other animal details might have changed, notify the keeper
-                            logger.info("Attempting to send email for updated animal (same keeper): {}", updatedAnimal.getName());
-                            cuidadorRepository.findById(updatedAnimal.getKeeperId()).ifPresent(cuidador -> {
-                                logger.info("Cuidador found for keeperId: {}. Contact email: {}", updatedAnimal.getKeeperId(), cuidador.getContact());
-                                String subject = "Detalhes do Animal Atualizados: " + updatedAnimal.getName();
-                                String body = String.format("Prezado(a) %s,<br><br>Os detalhes do animal <b>%s</b> (Espécie: %s), atribuído a você, foram atualizados.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                                        cuidador.getName().replace("%", "%%"), updatedAnimal.getName().replace("%", "%%"), updatedAnimal.getSpecies().replace("%", "%%"));
-                                emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
-                                logger.info("Email notification sent for updated animal {} to same keeper {}", updatedAnimal.getName(), cuidador.getName());
-                            });
-                        } else if (updatedAnimal.getKeeperId() == null && oldKeeperId != null) {
-                            logger.info("Animal {} unassigned from keeper {}. Attempting to notify old keeper.", updatedAnimal.getName(), oldKeeperId);
-                        } else {
-                            logger.info("No keeperId change or new assignment for updated animal: {}. Skipping email notification.", updatedAnimal.getName());
-                        }
-                        // Optionally, notify the old keeper if assignment changed (animal unassigned or reassigned)
-                        if (oldKeeperId != null && (updatedAnimal.getKeeperId() == null || !updatedAnimal.getKeeperId().equals(oldKeeperId))) {
-                             cuidadorRepository.findById(oldKeeperId).ifPresent(cuidador -> {
-                                logger.info("Cuidador found for old keeperId: {}. Contact email: {}", oldKeeperId, cuidador.getContact());
-                                String subject = "Animal Desatribuído: " + updatedAnimal.getName();
-                                String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s) foi desatribuído de você.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                                        cuidador.getName().replace("%", "%%"), updatedAnimal.getName().replace("%", "%%"), updatedAnimal.getSpecies().replace("%", "%%"));
-                                emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
-                                logger.info("Email notification sent for unassigned animal {} to old keeper {}", updatedAnimal.getName(), cuidador.getName());
-                            });
-                        }
-                    } catch (Exception e) {
-                        logger.error("Error sending email notification for animal with ID {}: {}", id, e.getMessage(), e);
-                        // Continue processing even if email fails, or rethrow if email is critical
-                        // For now, we'll just log and continue.
-                    }
-
-
+                    handleUpdateNotifications(updatedAnimal, oldKeeperId);
+                    
                     return convertToDto(updatedAnimal);
                 })
                 .orElseThrow(() -> {
@@ -251,19 +189,68 @@ public class AnimalService {
         animalRepository.deleteById(id);
         logger.info("Animal with ID {} deleted successfully.", id);
 
-        // Send email notification to keeper if assigned
-        if (animalToDelete.getKeeperId() != null) {
-            logger.info("Attempting to send email for deleted animal: {}", animalToDelete.getName());
-            cuidadorRepository.findById(animalToDelete.getKeeperId()).ifPresent(cuidador -> {
-                logger.info("Cuidador found for keeperId: {}. Contact email: {}", animalToDelete.getKeeperId(), cuidador.getContact());
-                String subject = "Animal Removido: " + animalToDelete.getName();
-                String body = String.format("Prezado(a) %s,<br><br>O animal <b>%s</b> (Espécie: %s), que estava atribuído a você, foi removido do sistema.<br><br>Atenciosamente,<br>Gerência do Zoológico",
-                        cuidador.getName().replace("%", "%%"), animalToDelete.getName().replace("%", "%%"), animalToDelete.getSpecies().replace("%", "%%"));
+        String subject = "Animal Removido: " + animalToDelete.getName();
+        sendKeeperNotification(animalToDelete.getKeeperId(), animalToDelete, subject, DELETED_BODY);
+    }
+
+    private void handleUpdateNotifications(Animal updatedAnimal, Long oldKeeperId) {
+        Long newKeeperId = updatedAnimal.getKeeperId();
+
+        try {
+            if (newKeeperId != null && !newKeeperId.equals(oldKeeperId)) {
+                String newAssignmentSubject = "Atribuição de Animal Atualizada: " + updatedAnimal.getName();
+                sendKeeperNotification(newKeeperId, updatedAnimal, newAssignmentSubject, NEW_ASSIGNMENT_BODY);
+                
+                if (oldKeeperId != null) {
+                    String unassignmentSubject = "Animal Desatribuído: " + updatedAnimal.getName();
+                    sendKeeperNotification(oldKeeperId, updatedAnimal, unassignmentSubject, UNASSIGNMENT_BODY);
+                }
+            } 
+            else if (newKeeperId != null && newKeeperId.equals(oldKeeperId)) {
+                String subject = "Detalhes do Animal Atualizados: " + updatedAnimal.getName();
+                sendKeeperNotification(newKeeperId, updatedAnimal, subject, UPDATE_DETAILS_BODY);
+            }
+            else if (newKeeperId == null && oldKeeperId != null) {
+                String subject = "Animal Desatribuído: " + updatedAnimal.getName();
+                sendKeeperNotification(oldKeeperId, updatedAnimal, subject, UNASSIGNMENT_BODY);
+            }
+        } catch (Exception e) {
+             logger.error("Error sending email notification for updated animal with ID {}: {}", updatedAnimal.getId(), e.getMessage(), e);
+        }
+    }
+
+    private void sendKeeperNotification(Long keeperId, Animal animal, String subject, String bodyTemplate) {
+        if (keeperId == null) {
+            logger.info("No keeperId present for animal: {}. Skipping email notification.", animal.getName());
+            return;
+        }
+
+        cuidadorRepository.findById(keeperId).ifPresentOrElse(
+            cuidador -> {
+                logger.info("Cuidador '{}' found for keeperId: {}. Attempting to send email to {}", cuidador.getName(), keeperId, cuidador.getContact());
+                String body = String.format(bodyTemplate,
+                        cuidador.getName().replace("%", "%%"),
+                        animal.getName().replace("%", "%%"),
+                        animal.getSpecies().replace("%", "%%")
+                );
                 emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
-                logger.info("Email notification sent for deleted animal {} to keeper {}", animalToDelete.getName(), cuidador.getName());
-            });
-        } else {
-            logger.info("No keeperId present for deleted animal: {}. Skipping email notification.", animalToDelete.getName());
+                logger.info("Email notification sent for animal {} to keeper {}", animal.getName(), cuidador.getName());
+            },
+            () -> logger.warn("Could not send email. Cuidador not found for keeperId: {}", keeperId)
+        );
+    }
+
+    private void validateHabitatCapacity(Long newHabitatId, Long oldHabitatId) {
+        if (newHabitatId != null && !newHabitatId.equals(oldHabitatId)) {
+            Habitat habitat = habitatRepository.findById(newHabitatId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Habitat not found with ID: " + newHabitatId));
+
+            long currentAnimalsInHabitat = animalRepository.countByHabitatId(newHabitatId);
+            if (currentAnimalsInHabitat >= habitat.getCapacity()) {
+                logger.warn("Habitat capacity exceeded for habitat ID: {} (current: {}, capacity: {})", habitat.getId(), currentAnimalsInHabitat, habitat.getCapacity());
+                throw new HabitatCapacityExceededException("Habitat " + habitat.getName() + " (ID: " + habitat.getId() + ") has reached its maximum capacity.");
+            }
+            logger.debug("Habitat capacity check passed for habitat ID: {}", habitat.getId());
         }
     }
 
@@ -286,7 +273,7 @@ public class AnimalService {
 
     private Animal convertToEntity(AnimalRequestDTO animalRequestDTO) {
         return new Animal(
-                null, // ID will be generated by the database
+                null, // ID is generated by the database
                 animalRequestDTO.getName(),
                 animalRequestDTO.getSpecies(),
                 animalRequestDTO.getAge(),

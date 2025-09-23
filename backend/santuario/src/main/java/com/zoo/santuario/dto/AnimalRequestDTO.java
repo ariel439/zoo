@@ -1,6 +1,6 @@
 package com.zoo.santuario.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -10,16 +10,16 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class AnimalRequestDTO {
 
-    @NotNull
+    @NotBlank
     private String name;
-    @NotNull
+    @NotBlank
     private String species;
     private int age;
-    @NotNull
+    @NotBlank
     private String sex;
-    @NotNull
+    @NotBlank
     private String arrivalDate;
-    @NotNull
+    @NotBlank
     private String status;
     private String image; // Optional image URL
 
