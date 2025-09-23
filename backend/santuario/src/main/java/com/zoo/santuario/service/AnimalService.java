@@ -2,44 +2,40 @@ package com.zoo.santuario.service;
 
 import com.zoo.santuario.dto.AnimalRequestDTO;
 import com.zoo.santuario.dto.AnimalResponseDTO;
-import com.zoo.santuario.model.Animal;
-import com.zoo.santuario.repository.AnimalRepository;
-import com.zoo.santuario.repository.CuidadorRepository;
-import com.zoo.santuario.repository.HabitatRepository;
-import com.zoo.santuario.model.Habitat;
+import com.zoo.santuario.exception.CaretakerRequiredException;
+import com.zoo.santuario.exception.HabitatCapacityExceededException;
+import com.zoo.santuario.exception.ResourceNotFoundException;
+import com.zoo.santuario.model.*; // CHANGED: Import all models for type safety
+import com.zoo.santuario.repository.*; // CHANGED: Import all repositories
+import jakarta.persistence.criteria.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import jakarta.persistence.criteria.Predicate;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.zoo.santuario.exception.ResourceNotFoundException;
-import com.zoo.santuario.exception.CaretakerRequiredException;
-import com.zoo.santuario.exception.HabitatCapacityExceededException;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * This service class acts as the brain for all operations involving animals. 
- * It contains the core business logic, validation rules, and coordinates actions 
+ * This service class acts as the brain for all operations involving animals.
+ * It contains the core business logic, validation rules, and coordinates actions
  * like database changes and sending email notifications.
  *
  * --- How It Works ---
  *
- * 1.  API Layer Interaction: The `AnimalController` receives requests and calls the public methods here 
+ * 1.  API Layer Interaction: The `AnimalController` receives requests and calls the public methods here
  * (e.g., `createAnimal`, `updateAnimal`). These methods manage the entire workflow.
  *
- * 2.  Business Rule Validation:  Before making changes, it enforces key rules using private helper methods. For example, 
- * `validateHabitatCapacity` checks if a habitat is full, and other checks ensure an 
+ * 2.  Business Rule Validation:  Before making changes, it enforces key rules using private helper methods. For example,
+ * `validateHabitatCapacity` checks if a habitat is full, and other checks ensure an
  * animal always has a keeper assigned.
  *
  * 3.  Database Operations: It uses the `AnimalRepository` with JPA to save, update, delete, and find animal data in the database.
  *
  * 4.  Email Notification Workflow:
- * This is a key feature. After a successful database change (create, update, or delete), 
+ * This is a key feature. After a successful database change (create, update, or delete),
  * the service triggers a notification.
  * - The main method calls a specific helper `handleUpdateNotifications`.
  * - It analyzes the situation, decides who needs an email (the new keeper, the old keeper, or both), and determines what message they should get.
@@ -55,11 +51,14 @@ public class AnimalService {
     private AnimalRepository animalRepository;
     @Autowired
     private EmailService emailService;
-    
     @Autowired
     private CuidadorRepository cuidadorRepository;
     @Autowired
     private HabitatRepository habitatRepository;
+    @Autowired
+    private VeterinarioRepository veterinarioRepository;
+    @Autowired
+    private AlimentacaoRepository alimentacaoRepository;
 
     // Email templates for sending notifications
     private static final String EMAIL_GREETING = "Prezado(a) %s,<br><br>";
@@ -118,57 +117,93 @@ public class AnimalService {
                 });
     }
 
-    public AnimalResponseDTO createAnimal(AnimalRequestDTO animalRequestDTO) {
-        logger.info("Attempting to create new animal: {}", animalRequestDTO.getName());
-        if (animalRequestDTO.getKeeperId() == null) {
-            logger.warn("Caretaker required for new animal: {}", animalRequestDTO.getName());
+    // CHANGED: This method is updated to fetch related objects before saving.
+    public AnimalResponseDTO createAnimal(AnimalRequestDTO dto) {
+        logger.info("Attempting to create new animal: {}", dto.getName());
+        if (dto.getKeeperId() == null) {
+            logger.warn("Caretaker required for new animal: {}", dto.getName());
             throw new CaretakerRequiredException("Animal must have a caretaker associated.");
         }
 
-        validateHabitatCapacity(animalRequestDTO.getHabitatId(), null);
+        validateHabitatCapacity(dto.getHabitatId(), null);
 
-        Animal animal = convertToEntity(animalRequestDTO);
+        // Fetch related entities using the IDs from the DTO
+        Cuidador keeper = cuidadorRepository.findById(dto.getKeeperId())
+                .orElseThrow(() -> new ResourceNotFoundException("Keeper not found with ID: " + dto.getKeeperId()));
+        Habitat habitat = habitatRepository.findById(dto.getHabitatId())
+                .orElseThrow(() -> new ResourceNotFoundException("Habitat not found with ID: " + dto.getHabitatId()));
+        Veterinario vet = veterinarioRepository.findById(dto.getVetId())
+                .orElseThrow(() -> new ResourceNotFoundException("Vet not found with ID: " + dto.getVetId()));
+        Alimentacao feedingPlan = alimentacaoRepository.findById(dto.getFeedingPlanId())
+                .orElseThrow(() -> new ResourceNotFoundException("Feeding plan not found with ID: " + dto.getFeedingPlanId()));
+
+        // Create the Animal and set the full objects
+        Animal animal = new Animal();
+        animal.setName(dto.getName());
+        animal.setSpecies(dto.getSpecies());
+        animal.setAge(dto.getAge());
+        animal.setSex(dto.getSex());
+        animal.setArrivalDate(dto.getArrivalDate());
+        animal.setStatus(dto.getStatus());
+        animal.setImage(dto.getImage());
+        animal.setKeeper(keeper);
+        animal.setHabitat(habitat);
+        animal.setVet(vet);
+        animal.setFeedingPlan(feedingPlan);
+
         Animal savedAnimal = animalRepository.save(animal);
         logger.info("Animal created successfully with ID: {}", savedAnimal.getId());
 
         String subject = "Novo Animal Atribuído: " + savedAnimal.getName();
-        sendKeeperNotification(savedAnimal.getKeeperId(), savedAnimal, subject, NEW_ASSIGNMENT_BODY);
+        sendKeeperNotification(savedAnimal.getKeeper(), savedAnimal, subject, NEW_ASSIGNMENT_BODY);
 
         return convertToDto(savedAnimal);
     }
 
-     public AnimalResponseDTO updateAnimal(Long id, AnimalRequestDTO animalRequestDTO) {
+    // CHANGED: This method is updated to fetch and set full objects instead of just IDs.
+    public AnimalResponseDTO updateAnimal(Long id, AnimalRequestDTO dto) {
         logger.info("Attempting to update animal with ID: {}", id);
         return animalRepository.findById(id)
                 .map(existingAnimal -> {
                     logger.debug("Animal with ID {} found for update.", id);
                     
-                    if (animalRequestDTO.getKeeperId() == null) {
+                    if (dto.getKeeperId() == null) {
                         logger.warn("Caretaker required for animal update with ID: {}", id);
                         throw new CaretakerRequiredException("Animal must have a caretaker associated.");
                     }
 
-                    Long oldKeeperId = existingAnimal.getKeeperId();
+                    // Store the old keeper object for notification logic
+                    Cuidador oldKeeper = existingAnimal.getKeeper();
                     
-                    validateHabitatCapacity(animalRequestDTO.getHabitatId(), existingAnimal.getHabitatId());
+                    validateHabitatCapacity(dto.getHabitatId(), existingAnimal.getHabitat().getId());
 
-                    // CORRECTED: Using the correct 'animalRequestDTO' variable instead of 'dto'
-                    existingAnimal.setName(animalRequestDTO.getName());
-                    existingAnimal.setSpecies(animalRequestDTO.getSpecies());
-                    existingAnimal.setAge(animalRequestDTO.getAge());
-                    existingAnimal.setSex(animalRequestDTO.getSex());
-                    existingAnimal.setArrivalDate(animalRequestDTO.getArrivalDate());
-                    existingAnimal.setStatus(animalRequestDTO.getStatus());
-                    existingAnimal.setImage(animalRequestDTO.getImage());
-                    existingAnimal.setKeeperId(animalRequestDTO.getKeeperId());
-                    existingAnimal.setVetId(animalRequestDTO.getVetId());
-                    existingAnimal.setHabitatId(animalRequestDTO.getHabitatId());
-                    existingAnimal.setFeedingPlanId(animalRequestDTO.getFeedingPlanId());
+                    // Fetch the new related objects
+                    Cuidador newKeeper = cuidadorRepository.findById(dto.getKeeperId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Keeper not found with ID: " + dto.getKeeperId()));
+                    Habitat newHabitat = habitatRepository.findById(dto.getHabitatId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Habitat not found with ID: " + dto.getHabitatId()));
+                    Veterinario newVet = veterinarioRepository.findById(dto.getVetId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Vet not found with ID: " + dto.getVetId()));
+                    Alimentacao newFeedingPlan = alimentacaoRepository.findById(dto.getFeedingPlanId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Feeding plan not found with ID: " + dto.getFeedingPlanId()));
+
+                    // Update all fields on the existing animal
+                    existingAnimal.setName(dto.getName());
+                    existingAnimal.setSpecies(dto.getSpecies());
+                    existingAnimal.setAge(dto.getAge());
+                    existingAnimal.setSex(dto.getSex());
+                    existingAnimal.setArrivalDate(dto.getArrivalDate());
+                    existingAnimal.setStatus(dto.getStatus());
+                    existingAnimal.setImage(dto.getImage());
+                    existingAnimal.setKeeper(newKeeper);
+                    existingAnimal.setVet(newVet);
+                    existingAnimal.setHabitat(newHabitat);
+                    existingAnimal.setFeedingPlan(newFeedingPlan);
                     
                     Animal updatedAnimal = animalRepository.save(existingAnimal);
                     logger.info("Animal with ID {} updated successfully.", updatedAnimal.getId());
 
-                    handleUpdateNotifications(updatedAnimal, oldKeeperId);
+                    handleUpdateNotifications(updatedAnimal, oldKeeper);
                     
                     return convertToDto(updatedAnimal);
                 })
@@ -190,54 +225,54 @@ public class AnimalService {
         logger.info("Animal with ID {} deleted successfully.", id);
 
         String subject = "Animal Removido: " + animalToDelete.getName();
-        sendKeeperNotification(animalToDelete.getKeeperId(), animalToDelete, subject, DELETED_BODY);
+        // CHANGED: Pass the full keeper object instead of an ID.
+        sendKeeperNotification(animalToDelete.getKeeper(), animalToDelete, subject, DELETED_BODY);
     }
 
-    private void handleUpdateNotifications(Animal updatedAnimal, Long oldKeeperId) {
-        Long newKeeperId = updatedAnimal.getKeeperId();
+    // CHANGED: Method signature now uses the Cuidador object.
+    private void handleUpdateNotifications(Animal updatedAnimal, Cuidador oldKeeper) {
+        Cuidador newKeeper = updatedAnimal.getKeeper();
 
         try {
-            if (newKeeperId != null && !newKeeperId.equals(oldKeeperId)) {
+            // Compare objects now, not IDs.
+            if (newKeeper != null && !newKeeper.equals(oldKeeper)) {
                 String newAssignmentSubject = "Atribuição de Animal Atualizada: " + updatedAnimal.getName();
-                sendKeeperNotification(newKeeperId, updatedAnimal, newAssignmentSubject, NEW_ASSIGNMENT_BODY);
+                sendKeeperNotification(newKeeper, updatedAnimal, newAssignmentSubject, NEW_ASSIGNMENT_BODY);
                 
-                if (oldKeeperId != null) {
+                if (oldKeeper != null) {
                     String unassignmentSubject = "Animal Desatribuído: " + updatedAnimal.getName();
-                    sendKeeperNotification(oldKeeperId, updatedAnimal, unassignmentSubject, UNASSIGNMENT_BODY);
+                    sendKeeperNotification(oldKeeper, updatedAnimal, unassignmentSubject, UNASSIGNMENT_BODY);
                 }
-            } 
-            else if (newKeeperId != null && newKeeperId.equals(oldKeeperId)) {
-                String subject = "Detalhes do Animal Atualizados: " + updatedAnimal.getName();
-                sendKeeperNotification(newKeeperId, updatedAnimal, subject, UPDATE_DETAILS_BODY);
             }
-            else if (newKeeperId == null && oldKeeperId != null) {
+            else if (newKeeper != null && newKeeper.equals(oldKeeper)) {
+                String subject = "Detalhes do Animal Atualizados: " + updatedAnimal.getName();
+                sendKeeperNotification(newKeeper, updatedAnimal, subject, UPDATE_DETAILS_BODY);
+            }
+            else if (newKeeper == null && oldKeeper != null) {
                 String subject = "Animal Desatribuído: " + updatedAnimal.getName();
-                sendKeeperNotification(oldKeeperId, updatedAnimal, subject, UNASSIGNMENT_BODY);
+                sendKeeperNotification(oldKeeper, updatedAnimal, subject, UNASSIGNMENT_BODY);
             }
         } catch (Exception e) {
-             logger.error("Error sending email notification for updated animal with ID {}: {}", updatedAnimal.getId(), e.getMessage(), e);
+            logger.error("Error sending email notification for updated animal with ID {}: {}", updatedAnimal.getId(), e.getMessage(), e);
         }
     }
 
-    private void sendKeeperNotification(Long keeperId, Animal animal, String subject, String bodyTemplate) {
-        if (keeperId == null) {
-            logger.info("No keeperId present for animal: {}. Skipping email notification.", animal.getName());
+    // CHANGED: Method signature now uses the Cuidador object.
+    private void sendKeeperNotification(Cuidador keeper, Animal animal, String subject, String bodyTemplate) {
+        if (keeper == null) {
+            logger.info("No keeper present for animal: {}. Skipping email notification.", animal.getName());
             return;
         }
 
-        cuidadorRepository.findById(keeperId).ifPresentOrElse(
-            cuidador -> {
-                logger.info("Cuidador '{}' found for keeperId: {}. Attempting to send email to {}", cuidador.getName(), keeperId, cuidador.getContact());
-                String body = String.format(bodyTemplate,
-                        cuidador.getName().replace("%", "%%"),
-                        animal.getName().replace("%", "%%"),
-                        animal.getSpecies().replace("%", "%%")
-                );
-                emailService.sendAnimalNotificationEmail(cuidador.getContact(), subject, body);
-                logger.info("Email notification sent for animal {} to keeper {}", animal.getName(), cuidador.getName());
-            },
-            () -> logger.warn("Could not send email. Cuidador not found for keeperId: {}", keeperId)
+        // No longer need to find the keeper, it's passed in directly.
+        logger.info("Cuidador '{}' found for animal: {}. Attempting to send email to {}", keeper.getName(), animal.getName(), keeper.getContact());
+        String body = String.format(bodyTemplate,
+                keeper.getName().replace("%", "%%"),
+                animal.getName().replace("%", "%%"),
+                animal.getSpecies().replace("%", "%%")
         );
+        emailService.sendAnimalNotificationEmail(keeper.getContact(), subject, body);
+        logger.info("Email notification sent for animal {} to keeper {}", animal.getName(), keeper.getName());
     }
 
     private void validateHabitatCapacity(Long newHabitatId, Long oldHabitatId) {
@@ -245,7 +280,8 @@ public class AnimalService {
             Habitat habitat = habitatRepository.findById(newHabitatId)
                     .orElseThrow(() -> new ResourceNotFoundException("Habitat not found with ID: " + newHabitatId));
 
-            long currentAnimalsInHabitat = animalRepository.countByHabitatId(newHabitatId);
+            // CHANGED: Use the correct repository method name with the underscore.
+            long currentAnimalsInHabitat = animalRepository.countByHabitat_Id(newHabitatId);
             if (currentAnimalsInHabitat >= habitat.getCapacity()) {
                 logger.warn("Habitat capacity exceeded for habitat ID: {} (current: {}, capacity: {})", habitat.getId(), currentAnimalsInHabitat, habitat.getCapacity());
                 throw new HabitatCapacityExceededException("Habitat " + habitat.getName() + " (ID: " + habitat.getId() + ") has reached its maximum capacity.");
@@ -264,27 +300,10 @@ public class AnimalService {
                 animal.getArrivalDate(),
                 animal.getStatus(),
                 animal.getImage(),
-                animal.getKeeperId(),
-                animal.getVetId(),
-                animal.getHabitatId(),
-                animal.getFeedingPlanId()
-        );
-    }
-
-    private Animal convertToEntity(AnimalRequestDTO animalRequestDTO) {
-        return new Animal(
-                null, // ID is generated by the database
-                animalRequestDTO.getName(),
-                animalRequestDTO.getSpecies(),
-                animalRequestDTO.getAge(),
-                animalRequestDTO.getSex(),
-                animalRequestDTO.getArrivalDate(),
-                animalRequestDTO.getStatus(),
-                animalRequestDTO.getImage(),
-                animalRequestDTO.getKeeperId(),
-                animalRequestDTO.getVetId(),
-                animalRequestDTO.getHabitatId(),
-                animalRequestDTO.getFeedingPlanId()
+                animal.getKeeper() != null ? animal.getKeeper().getId() : null,
+                animal.getVet() != null ? animal.getVet().getId() : null,
+                animal.getHabitat() != null ? animal.getHabitat().getId() : null,
+                animal.getFeedingPlan() != null ? animal.getFeedingPlan().getId() : null
         );
     }
 }

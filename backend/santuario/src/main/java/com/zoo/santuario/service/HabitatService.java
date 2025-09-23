@@ -2,6 +2,7 @@ package com.zoo.santuario.service;
 
 import com.zoo.santuario.dto.HabitatRequestDTO;
 import com.zoo.santuario.dto.HabitatResponseDTO;
+import com.zoo.santuario.exception.ResourceNotFoundException;
 import com.zoo.santuario.model.Habitat;
 import com.zoo.santuario.repository.HabitatRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,13 +17,13 @@ public class HabitatService {
 
     @Autowired
     private HabitatRepository habitatRepository;
-
+    
+    // ... (getAllHabitats, getFilteredHabitats, getHabitatById, createHabitat, updateHabitat are all fine) ...
     public List<HabitatResponseDTO> getAllHabitats() {
         return habitatRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
-
     public List<HabitatResponseDTO> getFilteredHabitats(String type) {
         List<Habitat> habitats;
         if (type != null) {
@@ -34,18 +35,15 @@ public class HabitatService {
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
-
     public Optional<HabitatResponseDTO> getHabitatById(Long id) {
         return habitatRepository.findById(id)
                 .map(this::convertToDto);
     }
-
     public HabitatResponseDTO createHabitat(HabitatRequestDTO habitatRequestDTO) {
         Habitat habitat = convertToEntity(habitatRequestDTO);
         Habitat savedHabitat = habitatRepository.save(habitat);
         return convertToDto(savedHabitat);
     }
-
     public Optional<HabitatResponseDTO> updateHabitat(Long id, HabitatRequestDTO habitatRequestDTO) {
         return habitatRepository.findById(id)
                 .map(existingHabitat -> {
@@ -58,12 +56,16 @@ public class HabitatService {
                 });
     }
 
-    public boolean deleteHabitat(Long id) {
-        if (habitatRepository.existsById(id)) {
-            habitatRepository.deleteById(id);
-            return true;
+    // CHANGED: Added safe-deletion check
+    public void deleteHabitat(Long id) {
+        Habitat habitat = habitatRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Habitat not found with ID: " + id));
+
+        if (!habitat.getAnimals().isEmpty()) {
+            throw new IllegalStateException("Cannot delete habitat " + habitat.getName() + " because it still contains " + habitat.getAnimals().size() + " animal(s).");
         }
-        return false;
+        
+        habitatRepository.delete(habitat);
     }
 
     private HabitatResponseDTO convertToDto(Habitat habitat) {
@@ -82,7 +84,8 @@ public class HabitatService {
                 habitatRequestDTO.getName(),
                 habitatRequestDTO.getType(),
                 habitatRequestDTO.getCapacity(),
-                habitatRequestDTO.getStatus()
+                habitatRequestDTO.getStatus(),
+                null // The 'animals' list will be managed by the relationship
         );
     }
 }

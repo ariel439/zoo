@@ -2,6 +2,7 @@ package com.zoo.santuario.service;
 
 import com.zoo.santuario.dto.VeterinarioRequestDTO;
 import com.zoo.santuario.dto.VeterinarioResponseDTO;
+import com.zoo.santuario.exception.ResourceNotFoundException;
 import com.zoo.santuario.model.Veterinario;
 import com.zoo.santuario.repository.VeterinarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,13 +17,13 @@ public class VeterinarioService {
 
     @Autowired
     private VeterinarioRepository veterinarioRepository;
-
+    
+    // ... (getAllVeterinarios, getFilteredVeterinarios, getVeterinarioById, createVeterinario, updateVeterinario are all fine) ...
     public List<VeterinarioResponseDTO> getAllVeterinarios() {
         return veterinarioRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
-
     public List<VeterinarioResponseDTO> getFilteredVeterinarios(String specialty) {
         List<Veterinario> veterinarios;
         if (specialty != null) {
@@ -34,18 +35,15 @@ public class VeterinarioService {
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
-
     public Optional<VeterinarioResponseDTO> getVeterinarioById(Long id) {
         return veterinarioRepository.findById(id)
                 .map(this::convertToDto);
     }
-
     public VeterinarioResponseDTO createVeterinario(VeterinarioRequestDTO veterinarioRequestDTO) {
         Veterinario veterinario = convertToEntity(veterinarioRequestDTO);
         Veterinario savedVeterinario = veterinarioRepository.save(veterinario);
         return convertToDto(savedVeterinario);
     }
-
     public Optional<VeterinarioResponseDTO> updateVeterinario(Long id, VeterinarioRequestDTO veterinarioRequestDTO) {
         return veterinarioRepository.findById(id)
                 .map(existingVeterinario -> {
@@ -58,12 +56,16 @@ public class VeterinarioService {
                 });
     }
 
-    public boolean deleteVeterinario(Long id) {
-        if (veterinarioRepository.existsById(id)) {
-            veterinarioRepository.deleteById(id);
-            return true;
+    // CHANGED: Added safe-deletion check
+    public void deleteVeterinario(Long id) {
+        Veterinario veterinario = veterinarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Veterinario not found with ID: " + id));
+
+        if (!veterinario.getAnimals().isEmpty()) {
+            throw new IllegalStateException("Cannot delete vet " + veterinario.getName() + " because they are still assigned to " + veterinario.getAnimals().size() + " animal(s).");
         }
-        return false;
+        
+        veterinarioRepository.delete(veterinario);
     }
 
     private VeterinarioResponseDTO convertToDto(Veterinario veterinario) {
@@ -82,7 +84,8 @@ public class VeterinarioService {
                 veterinarioRequestDTO.getName(),
                 veterinarioRequestDTO.getCrmv(),
                 veterinarioRequestDTO.getSpecialty(),
-                veterinarioRequestDTO.getStatus()
+                veterinarioRequestDTO.getStatus(),
+                null // The 'animals' list will be managed by the relationship
         );
     }
 }

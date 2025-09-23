@@ -68,13 +68,21 @@ public class CuidadorService {
                 });
     }
 
-    public boolean deleteCuidador(Long id) {
-        if (cuidadorRepository.existsById(id)) {
-            cuidadorRepository.deleteById(id);
-            return true;
-        }
-        return false;
+public boolean deleteCuidador(Long id) {
+    // 1. Find the keeper first to check their relationships
+    Cuidador cuidador = cuidadorRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Cuidador not found with ID: " + id));
+
+    // 2. Check if the keeper's list of animals is empty
+    if (!cuidador.getAnimals().isEmpty()) {
+        // If the list is NOT empty, throw an error and do not delete
+        throw new IllegalStateException("Cannot delete keeper " + cuidador.getName() + " because they are still assigned to " + cuidador.getAnimals().size() + " animal(s).");
     }
+
+    // 3. If the list is empty, it's safe to delete
+    cuidadorRepository.delete(cuidador);
+    return true;
+}
 
     private CuidadorResponseDTO convertToDto(Cuidador cuidador) {
         return new CuidadorResponseDTO(

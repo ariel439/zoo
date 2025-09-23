@@ -27,4 +27,6 @@ public class Veterinario {
     @Column(nullable = false)
     private String status;
 
+    @OneToMany(mappedBy = "vet")
+    private List<Animal> animals;
 }

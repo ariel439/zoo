@@ -21,13 +21,12 @@ public class Alimentacao {
     @Column(nullable = false)
     private String planName;
     @Column(nullable = false)
-    private String animalSpecies;
-    @Column(nullable = false)
     private String foodType;
     @Column(nullable = false)
     private String quantity;
     @Column(nullable = false)
     private String frequency;
-    private Long animalId;
 
+    @OneToMany(mappedBy = "feedingPlan")
+    private List<Animal> animals;
 }

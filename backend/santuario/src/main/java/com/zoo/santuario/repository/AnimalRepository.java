@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AnimalRepository extends JpaRepository<Animal, Long>, JpaSpecificationExecutor<Animal> {
-    long countByHabitatId(Long habitatId);
+    long countByHabitat_Id(Long habitatId);
 }

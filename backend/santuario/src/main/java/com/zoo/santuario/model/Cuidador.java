@@ -29,4 +29,6 @@ public class Cuidador {
     @Column(nullable = false)
     private String workShift; // Represents the work shift of the caretaker (e.g., 'Morning', 'Afternoon', 'Night')
 
+    @OneToMany(mappedBy = "keeper")
+    private List<Animal> animals;
 }

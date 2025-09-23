@@ -9,6 +9,6 @@ import java.util.List;
 @Repository
 public interface AlimentacaoRepository extends JpaRepository<Alimentacao, Long> {
     List<Alimentacao> findByFoodType(String foodType);
-    List<Alimentacao> findByAnimalId(Long animalId);
-    List<Alimentacao> findByFoodTypeAndAnimalId(String foodType, Long animalId);
+    List<Alimentacao> findByAnimals_Id(Long animalId); 
+    List<Alimentacao> findByFoodTypeAndAnimals_Id(String foodType, Long animalId);
 }

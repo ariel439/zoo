@@ -26,4 +26,6 @@ public class Habitat {
     @Column(nullable = false)
     private String status;
 
+    @OneToMany(mappedBy = "habitat")
+    private List<Animal> animals;
 }

@@ -29,12 +29,21 @@ public class Animal {
     private String arrivalDate;
     @Column(nullable = false)
     private String status;
-    private String image; // Optional image URL
+    private String image;
 
-    // Relational IDs
-    private Long keeperId;
-    private Long vetId;
-    private Long habitatId;
-    private Long feedingPlanId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "keeper_id")
+    private Cuidador keeper;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vet_id")
+    private Veterinario vet;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "habitat_id")
+    private Habitat habitat; 
+
+    @ManyToOne(fetch = FetchType.LAZY) 
+    @JoinColumn(name = "feeding_plan_id")
+    private Alimentacao feedingPlan;
 }
